@@ -1,0 +1,1 @@
+nohup python3 deblurring.py > outputs/deblurring.log &

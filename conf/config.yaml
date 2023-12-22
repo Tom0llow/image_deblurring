@@ -1,0 +1,11 @@
+data:
+  input: "input"
+
+device: "cuda"
+num_steps: 1000
+num_scales: 5000
+batch_size: 64
+save_interval: 1
+alpha_: 1
+lambda_: 0.1
+eta_: 0.001 # learning rate

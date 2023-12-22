@@ -1,0 +1,35 @@
+[tool.poetry]
+name = "workspace"
+version = "0.1.0"
+description = ""
+authors = ["Tomohiro Sakamoto <sakamoto.tomohiro431@mail.kyutech.jp>"]
+
+[tool.poetry.dependencies]
+python = ">=3.9, <3.12"
+ml-collections = ">=0.1.0"
+absl-py = ">=0.10.0"
+ninja = "^1.11.1.1"
+jupyter = "^1.0.0"
+torch = ">=2.0.0, <=2.1.0, !=2.0.1"
+numpy = ">=1.22,<=1.24.3"
+matplotlib = "^3.8.2"
+black = "^23.11.0"
+flake8 = "^6.1.0"
+jax = "^0.4.20"
+jaxlib = "^0.4.20"
+scipy = "^1.11.4"
+tensorflow = "2.13.0"
+tensorflow-gan = ">=2.0.0"
+tensorflow-datasets = ">=3.1.0"
+tensorflow-addons = ">=0.12.0"
+tensorboard = ">=2.4.0"
+tensorflow-probability = "0.21.0"
+opencv-python = "^4.8.1.78"
+imageio = "^2.33.0"
+hydra-core = "^1.3.2"
+
+[tool.poetry.dev-dependencies]
+
+[build-system]
+requires = ["poetry-core>=1.0.0", "setuptools"]
+build-backend = "poetry.core.masonry.api"
