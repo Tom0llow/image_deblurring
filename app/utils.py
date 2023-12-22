@@ -12,7 +12,7 @@ def create_results_dir(class_name, results_path="image/results"):
     except FileExistsError:
         print(f"- {class_dir} is already exist.")
 
-    for sub_dir_name in ["blur_images", "estimated_images", "estimated_kernels", "original_images", "original_kernels"]:
+    for sub_dir_name in ["blur_images", "estimated_images", "estimated_kernels", "original_images", "original_kernels", "outputs"]:
         try:
             sub_dir = os.path.join(class_dir, sub_dir_name)
             os.mkdir(sub_dir)
@@ -47,40 +47,36 @@ def save_estimateds(fname, path_to_save, estimated_i, estimated_k):
     print("Saved estimated image and kernel.")
 
 
-def plot_grads(path_to_save, norms_i, norms_k):
-    def plot_grad(norms):
-        x = np.arange(len(norms))
-        y = norms
-        plt.plot(x, y, marker="o")
-        for i, v in enumerate(norms):
-            plt.text(x[i], y[i], f"{v:.3f}")
-        plt.xlabel("time step")
-        plt.ylabel("grad norm")
-
-    ## image
-    plt.figure()
-    plot_grad(norms_i)
-    plt.title("image grad")
-    plt.savefig(os.path.join(path_to_save + "/outputs", "image_grad.png"))
-    plt.clf()
-
-    ## kernel
-    plt.figure()
-    plot_grad(norms_k)
-    plt.title("kernel grad")
-    plt.savefig(os.path.join(path_to_save + "/outputs", "kernel_grad.png"))
-    plt.clf()
-
-
 def plot_ave_losses(path_to_save, losses):
     plt.figure()
-    x = np.arange(len(losses))
-    y = losses
-    plt.plot(x, y, marker="o")
-    for i, v in enumerate(losses):
-        plt.text(x[i], y[i], f"{v:.3f}")
+    plt.plot(np.arange(len(losses)), losses, marker="o")
     plt.xlabel("time step")
-    plt.ylabel("ave loss")
-    plt.title("deblurring loss")
+    plt.title("Average Deblurring Loss")
+    plt.grid()
     plt.savefig(os.path.join(path_to_save + "/outputs", "ave_losses.png"))
+    plt.close()
+    plt.clf()
+
+
+def plot_params(class_name, path_to_save, params, scores, grads):
+    # init
+    plt.figure()
+    # plot params
+    plt.subplot(311, title="param mean")
+    plt.plot(np.arange(len(params)), params, marker="o", color="b")
+    plt.xlabel("time step")
+    # plot scores
+    plt.subplot(312, title="score norm")
+    plt.plot(np.arange(len(scores)), scores, marker="^", color="g")
+    plt.xlabel("time step")
+    # plot grads
+    plt.subplot(313, title="grad norm")
+    plt.plot(np.arange(len(grads)), grads, marker="x", color="r")
+    plt.xlabel("time step")
+    # set options
+    plt.title(f"[{class_name}]")
+    plt.tight_layout()
+    plt.grid()
+    plt.savefig(os.path.join(path_to_save + "/outputs", f"{class_name}_params.png"))
+    plt.close()
     plt.clf()

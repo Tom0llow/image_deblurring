@@ -3,7 +3,7 @@ from torch.nn import functional as F
 import math
 from tqdm import tqdm
 
-from app.utils import save_estimateds, plot_grads, plot_ave_losses
+from app.utils import save_estimateds, plot_ave_losses, plot_params
 
 
 def E(x):
@@ -105,6 +105,8 @@ class LangevinGD(torch.optim.Optimizer):
     def __init__(self, params, alpha_, lambda_, eta_, m, snr):
         defaults = dict(alpha_=alpha_, lambda_=lambda_, eta_=eta_, m=m, snr=snr)
         super(LangevinGD, self).__init__(params, defaults)
+        self.param_means = []
+        self.score_norms = []
         self.grad_norms = []
 
     def step(self, score_fn):
@@ -123,13 +125,15 @@ class LangevinGD(torch.optim.Optimizer):
                 score_norm = torch.norm(score_fn.reshape(score_fn.shape[0], -1), dim=-1).mean()
                 noise_norm = torch.norm(noise.reshape(noise.shape[0], -1), dim=-1).mean()
 
-                self.grad_norms.append(grad_norm.detach().cpu().numpy())
-
-                grad_stepsize = (noise_norm / grad_norm) ** 2 * 2 * lr * alpha_
+                grad_stepsize = (noise_norm / grad_norm) ** 2 * 2 * lr * alpha_ * 0.5
                 score_stepsize = (snr * noise_norm / score_norm) ** 2 * 2 * lr * lambda_
 
-                p_mean = p.data + (1 - score_stepsize) * p.data - score_stepsize * score_fn - 0.5 * grad_stepsize * grad
+                p_mean = p.data + (1 - score_stepsize) * p.data - score_stepsize * score_fn - grad_stepsize * grad
                 p.data = p_mean + math.sqrt(2 * score_stepsize) * noise
+
+                self.param_means.append(torch.mean(p.data.detach().clone()).cpu().numpy())
+                self.score_norms.append(score_norm.detach().cpu().numpy())
+                self.grad_norms.append(grad_norm.detach().cpu().numpy())
                 # The last step does not include any noise
                 return E(p_mean)
 
@@ -179,7 +183,7 @@ def optimize(
             ave_loss = 0.0
 
             # optimize image
-            loss_i = model_i(estimated_k)
+            loss_i = model_i(estimated_k.detach().clone())
             if not torch.isnan(loss_i):
                 with torch.no_grad():
                     image_score = get_score(model_i.state_dict()["x_i"], t, image_score_fn, num_scales, batch_size)
@@ -195,7 +199,7 @@ def optimize(
             loss_i.detach_()
 
             # optimize kernel
-            loss_k = model_k(estimated_i)
+            loss_k = model_k(estimated_i.detach().clone())
             if not torch.isnan(loss_k):
                 with torch.no_grad():
                     kernel_score = get_score(model_k.state_dict()["x_k"], t, kernel_score_fn, num_scales, batch_size)
@@ -214,31 +218,17 @@ def optimize(
                 break
             else:
                 ave_loss /= 2
+            ave_losses.append(ave_loss.detach().cpu().numpy())
 
             tqdm_epoch.set_description(f"Average Deblur Loss = {ave_loss:.5f}")
 
-            ave_losses.append(ave_loss.detach().cpu().numpy())
-
             # save
             if i % save_interval == 0:
-                print(estimated_i.size())
-                print(estimated_k.size())
-                save_estimateds(
-                    fname=fname,
-                    path_to_save=path_to_save,
-                    estimated_i=normalize(estimated_i.detach().clone()),
-                    estimated_k=normalize(estimated_k.detach().clone()),
-                )
+                # save image and kernel
+                save_estimateds(fname, path_to_save, estimated_i=normalize(estimated_i.detach().clone()), estimated_k=normalize(estimated_k.detach().clone()))
+                # plot each values
+                plot_ave_losses(path_to_save, losses=ave_losses)
+                plot_params('image', path_to_save, params=optim_i.param_means, scores=optim_i.score_norms, grads=optim_i.grad_norms)
+                plot_params('kernel', path_to_save, params=optim_k.param_means, scores=optim_k.score_norms, grads=optim_k.grad_norms)
 
-                plot_grads(
-                    path_to_save=path_to_save,
-                    norms_i=optim_i.grad_norms,
-                    norms_k=optim_k.grad_norms,
-                )
-
-                plot_ave_losses(
-                    path_to_save=path_to_save,
-                    losses=ave_losses,
-                )
-
-    return normalize(estimated_i), normalize(estimated_k)
+    return normalize(estimated_i.detach().clone()), normalize(estimated_k.detach().clone())
