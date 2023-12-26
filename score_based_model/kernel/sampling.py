@@ -28,7 +28,7 @@ def pc_sampler(score_model, marginal_prob_std, diffusion_coeff, batch_size=64, n
             x_mean = x + (g**2)[:, None, None, None] * score_model(x, batch_time_step) * step_size
             x = x_mean + torch.sqrt(g**2 * step_size)[:, None, None, None] * torch.randn_like(x)
 
-        # The last step does not include any noise
+            # The last step does not include any noise
         return x_mean
 
 

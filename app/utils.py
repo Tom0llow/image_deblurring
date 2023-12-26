@@ -48,7 +48,7 @@ def save_estimateds(fname, path_to_save, estimated_i, estimated_k):
 
 
 def plot_ave_losses(path_to_save, losses):
-    plt.figure()
+    plt.figure(figsize=(12, 8))
     plt.plot(np.arange(len(losses)), losses, marker="o")
     plt.xlabel("time step")
     plt.title("Average Deblurring Loss")
@@ -60,23 +60,25 @@ def plot_ave_losses(path_to_save, losses):
 
 def plot_params(class_name, path_to_save, params, scores, grads):
     # init
-    plt.figure()
+    plt.figure(figsize=(24, 8))
     # plot params
-    plt.subplot(311, title="param mean")
+    plt.subplot(131, title="param mean")
     plt.plot(np.arange(len(params)), params, marker="o", color="b")
     plt.xlabel("time step")
+    plt.grid()
     # plot scores
-    plt.subplot(312, title="score norm")
+    plt.subplot(132, title="score norm")
     plt.plot(np.arange(len(scores)), scores, marker="^", color="g")
     plt.xlabel("time step")
+    plt.grid()
     # plot grads
-    plt.subplot(313, title="grad norm")
+    plt.subplot(133, title="grad norm")
     plt.plot(np.arange(len(grads)), grads, marker="x", color="r")
     plt.xlabel("time step")
-    # set options
-    plt.title(f"[{class_name}]")
-    plt.tight_layout()
     plt.grid()
+    # set options
+    plt.suptitle(f"[{class_name}]")
+    plt.tight_layout()
     plt.savefig(os.path.join(path_to_save + "/outputs", f"{class_name}_params.png"))
     plt.close()
     plt.clf()

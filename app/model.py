@@ -7,10 +7,12 @@ from app.utils import save_estimateds, plot_ave_losses, plot_params
 
 
 def E(x):
+    # expected value
     return x.float().mean(dim=0)
 
 
 def normalize(x):
+    # min-max normalize
     size = x.size()
 
     x = x.to(torch.float)
@@ -22,6 +24,7 @@ def normalize(x):
 
 
 def conv2D(image, kernel):
+    # blur
     channel, yN, xN = image.size()
     key, kex = kernel.size()
     delta = yN - key
@@ -184,6 +187,7 @@ def optimize(
 
             # optimize image
             loss_i = model_i(estimated_k.detach().clone())
+
             if not torch.isnan(loss_i):
                 with torch.no_grad():
                     image_score = get_score(model_i.state_dict()["x_i"], t, image_score_fn, num_scales, batch_size)
@@ -228,7 +232,7 @@ def optimize(
                 save_estimateds(fname, path_to_save, estimated_i=normalize(estimated_i.detach().clone()), estimated_k=normalize(estimated_k.detach().clone()))
                 # plot each values
                 plot_ave_losses(path_to_save, losses=ave_losses)
-                plot_params('image', path_to_save, params=optim_i.param_means, scores=optim_i.score_norms, grads=optim_i.grad_norms)
-                plot_params('kernel', path_to_save, params=optim_k.param_means, scores=optim_k.score_norms, grads=optim_k.grad_norms)
+                plot_params("image", path_to_save, params=optim_i.param_means, scores=optim_i.score_norms, grads=optim_i.grad_norms)
+                plot_params("kernel", path_to_save, params=optim_k.param_means, scores=optim_k.score_norms, grads=optim_k.grad_norms)
 
     return normalize(estimated_i.detach().clone()), normalize(estimated_k.detach().clone())
