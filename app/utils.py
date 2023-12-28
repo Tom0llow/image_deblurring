@@ -32,7 +32,7 @@ def save_originals(fname, paths, path_to_save):
     print("Saved original image and kernel.")
 
 
-def save_estimateds(fname, path_to_save, estimated_i, estimated_k):
+def save_estimateds(fname, path_to_save, estimated_i, estimated_k=None):
     ## image
     estimated_i = estimated_i.permute(1, 2, 0)
     estimated_i = estimated_i.cpu().detach().numpy()
@@ -40,11 +40,13 @@ def save_estimateds(fname, path_to_save, estimated_i, estimated_k):
     cv2.imwrite(os.path.join(path_to_save + "/estimated_images", fname), estimated_i * 255)
 
     ## kernel
-    estimated_k = estimated_k.permute(1, 2, 0).squeeze()
-    estimated_k = estimated_k.cpu().detach().numpy()
-    cv2.imwrite(os.path.join(path_to_save + "/estimated_kernels", fname), estimated_k * 255)
+    if estimated_k is not None:
+        estimated_k = estimated_k.permute(1, 2, 0).squeeze()
+        estimated_k = estimated_k.cpu().detach().numpy()
+        cv2.imwrite(os.path.join(path_to_save + "/estimated_kernels", fname), estimated_k * 255)
+        print("Saved estimated image and kernel.")
 
-    print("Saved estimated image and kernel.")
+    print("Saved estimated image")
 
 
 def plot_ave_losses(path_to_save, losses):

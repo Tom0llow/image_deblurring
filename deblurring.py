@@ -1,5 +1,5 @@
 from app.utils import create_results_dir, save_originals
-from app.run import run
+from app.config import Config
 
 if __name__ == "__main__":
     create_results_dir(class_name="celebA")
@@ -16,10 +16,28 @@ if __name__ == "__main__":
     image_ckpt_path = "score_based_model/checkpoints/celebA/checkpoint.pth"
     kernel_ckpt_path = "score_based_model/checkpoints/blur_kernel/checkpoint.pth"
 
-    run(
-        path_to_save=folder_to_save,
-        blur_image_path=blur_image_path,
-        image_ckpt_path=image_ckpt_path,
-        kernel_ckpt_path=kernel_ckpt_path,
-        device="cuda",
-    )
+    # load config
+    params = Config.get_conf()
+    if params["blind"] is True:
+        from app.blind_deconvolution import run
+
+        run(
+            params,
+            path_to_save=folder_to_save,
+            blur_image_path=blur_image_path,
+            image_ckpt_path=image_ckpt_path,
+            kernel_ckpt_path=kernel_ckpt_path,
+            device="cuda",
+        )
+
+    else:
+        from app.deconvolution import run
+
+        run(
+            params,
+            path_to_save=folder_to_save,
+            blur_image_path=blur_image_path,
+            kernel_image_path=blur_kernel_path,
+            image_ckpt_path=image_ckpt_path,
+            device="cuda",
+        )
