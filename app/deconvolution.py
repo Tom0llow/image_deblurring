@@ -33,7 +33,6 @@ def run(params, path_to_save, blur_image_path, kernel_image_path, image_ckpt_pat
         blur_image,
         kernel_image,
         image_score_model,
-        alpha_=params["alpha_"],
         lambda_=params["lambda_"],
         eta_=params["eta_"],
         fname=blur_image_path.split("/")[-1],

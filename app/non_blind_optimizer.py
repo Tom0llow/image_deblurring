@@ -7,7 +7,7 @@ from app.model import LangevinGD
 from app.utils import save_estimateds, plot_ave_losses, plot_params
 
 
-def optimize(blur_image, kernel_image, image_score_fn, alpha_, lambda_, eta_, fname, path_to_save, save_interval=100, num_steps=1000, num_scales=10000, batch_size=64, eps=1e-3, device="cuda"):
+def optimize(blur_image, kernel_image, image_score_fn, lambda_, eta_, fname, path_to_save, save_interval=100, num_steps=1000, num_scales=10000, batch_size=64, eps=1e-3, device="cuda"):
     # Initial samples
     image_init = torch.randn(num_scales, 3, 256, 256, device=device)
 
@@ -18,7 +18,7 @@ def optimize(blur_image, kernel_image, image_score_fn, alpha_, lambda_, eta_, fn
     torch.cuda.empty_cache()
 
     # optimizer
-    optim_i = LangevinGD(model_i.parameters(), alpha_, lambda_, eta_, num_scales)
+    optim_i = LangevinGD(model_i.parameters(), lambda_, eta_, num_scales)
 
     timesteps = torch.linspace(1.0, eps, num_steps, device=device)
     ave_losses = []
@@ -37,7 +37,7 @@ def optimize(blur_image, kernel_image, image_score_fn, alpha_, lambda_, eta_, fn
                 ## langevin step
                 optim_i.zero_grad(set_to_none=True)
                 loss_i.backward()
-                clip_grad_norm_(image_score, max_norm=10000, norm_type=2)
+                # clip_grad_norm_(image_score, max_norm=10000, norm_type=2)
                 estimated_i = optim_i.step(image_score)
 
                 del image_score

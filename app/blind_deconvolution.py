@@ -17,8 +17,6 @@ def run(params, path_to_save, blur_image_path, image_ckpt_path, kernel_ckpt_path
         print(e)
 
     # load score model
-    sigma = 25.0
-    marginal_prob_std_fn = functools.partial(marginal_prob_std, sigma=sigma, device=device)
     # checkpoints
     ## image
     try:
@@ -28,6 +26,8 @@ def run(params, path_to_save, blur_image_path, image_ckpt_path, kernel_ckpt_path
         print("Specify the checkpoint path.")
     ## kernel
     try:
+        sigma = 25.0
+        marginal_prob_std_fn = functools.partial(marginal_prob_std, sigma=sigma, device=device)
         kernel_score_model = get_kernel_score_model(kernel_ckpt_path, marginal_prob_std_fn, device=device)
     except FileNotFoundError as e:
         print(e)
@@ -37,8 +37,6 @@ def run(params, path_to_save, blur_image_path, image_ckpt_path, kernel_ckpt_path
         blur_image,
         image_score_model,
         kernel_score_model,
-        marginal_prob_std_fn,
-        alpha_=params["alpha_"],
         lambda_=params["lambda_"],
         eta_=params["eta_"],
         fname=blur_image_path.split("/")[-1],

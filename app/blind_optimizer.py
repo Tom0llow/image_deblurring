@@ -8,27 +8,10 @@ from app.utils import save_estimateds, plot_ave_losses, plot_params
 
 
 # Alternating Optimization
-def optimize(
-    blur_image,
-    image_score_fn,
-    kernel_score_fn,
-    marginal_prob_std,
-    alpha_,
-    lambda_,
-    eta_,
-    fname,
-    path_to_save,
-    save_interval=100,
-    num_steps=1000,
-    num_scales=10000,
-    batch_size=64,
-    eps=1e-3,
-    device="cuda",
-):
+def optimize(blur_image, image_score_fn, kernel_score_fn, lambda_, eta_, fname, path_to_save, save_interval=100, num_steps=1000, num_scales=10000, batch_size=64, eps=1e-3, device="cuda"):
     # Initial samples
     t = torch.ones(num_scales, device=device)
-    # image_init = torch.randn(num_scales, 3, 256, 256, device=device) * 50  # celebahq_256_ncsnpp_continuous
-    # kernel_init = torch.randn(num_scales, 1, 64, 64, device=device) * marginal_prob_std(t)[:, None, None, None]
+
     image_init = torch.randn(num_scales, 3, 256, 256, device=device)
     kernel_init = torch.randn(num_scales, 1, 64, 64, device=device)
 
@@ -41,8 +24,8 @@ def optimize(
     torch.cuda.empty_cache()
 
     # optimizer
-    optim_i = LangevinGD(model_i.parameters(), alpha_, lambda_, eta_, num_scales)
-    optim_k = LangevinGD(model_k.parameters(), alpha_, lambda_, eta_, num_scales)
+    optim_i = LangevinGD(model_i.parameters(), lambda_, eta_, num_scales)
+    optim_k = LangevinGD(model_k.parameters(), lambda_, eta_, num_scales)
 
     timesteps = torch.linspace(1.0, eps, num_steps, device=device)
     ave_losses = []

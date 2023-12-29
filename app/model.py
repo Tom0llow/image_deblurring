@@ -123,8 +123,8 @@ class KernelLoss(DeblurLoss):
 
 # mean-field Langevin Dynamics
 class LangevinGD(torch.optim.Optimizer):
-    def __init__(self, params, alpha_, lambda_, eta_, m):
-        defaults = dict(alpha_=alpha_, lambda_=lambda_, eta_=eta_, m=m)
+    def __init__(self, params, lambda_, eta_, m):
+        defaults = dict(lambda_=lambda_, eta_=eta_, m=m)
         super(LangevinGD, self).__init__(params, defaults)
         self.param_means = []
         self.param_vars = []
@@ -135,7 +135,6 @@ class LangevinGD(torch.optim.Optimizer):
         assert len(self.param_groups) == 1
         for group in self.param_groups:
             for p in group["params"]:
-                alpha_ = group["alpha_"]
                 lambda_ = group["lambda_"]
                 lr = group["m"] * group["eta_"]
                 noise = torch.randn_like(p.data)
@@ -144,7 +143,7 @@ class LangevinGD(torch.optim.Optimizer):
                 grad_norm = torch.norm(grad.reshape(grad.shape[0], -1), dim=-1).mean()
                 score_norm = torch.norm(score_fn.reshape(score_fn.shape[0], -1), dim=-1).mean()
 
-                grad_stepsize = lr * alpha_ * 0.5
+                grad_stepsize = lr * 0.5
                 score_stepsize = lr * lambda_
 
                 p_mean = (1 - score_stepsize) * p.data - score_stepsize * score_fn - grad_stepsize * grad
