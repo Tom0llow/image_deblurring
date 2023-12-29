@@ -4,6 +4,6 @@ blind : false
 num_steps: 5000
 num_scales: 3000
 batch_size: 64
-save_interval: 50
-lambda_: 0.1 # regularization coefficient
-eta_: 0.01 # learning rate
+save_interval: 1
+lambda_: 0.01 # regularization coefficient
+eta_: 0.001 # learning rate
