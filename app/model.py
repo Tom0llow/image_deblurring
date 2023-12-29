@@ -60,6 +60,27 @@ def get_score(x, t, score_fn, num_scales, batch_size):
     return score[1:]
 
 
+def clip_grad_norm_(grad, max_norm, norm_type):
+    max_norm = float(max_norm)
+    norm_type = float(norm_type)
+
+    if norm_type == torch.inf:
+        norms = [torch.linalg.vector_norm(g.detach(), torch.inf).to(grad.device) for g in grad]
+        total_norm = norms[0] if len(norms) == 1 else torch.max(torch.stack(norms))
+    else:
+        norms = []
+        norms.extend([torch.linalg.vector_norm(g, norm_type) for g in grad])
+        total_norm = torch.linalg.vector_norm(torch.stack([norm.to(grad.device) for norm in norms]), norm_type)
+
+    clip_coef = max_norm / (total_norm + 1e-6)
+    clip_coef_clamped = torch.clamp(clip_coef, max=1.0)
+    clip_coef_clamped_device = clip_coef_clamped.to(grad.device)
+    for g in grad:
+        g.detach().mul_(clip_coef_clamped_device)
+
+    return total_norm
+
+
 class DeblurLoss(torch.nn.Module):
     def __init__(self):
         super(DeblurLoss, self).__init__()
@@ -102,10 +123,11 @@ class KernelLoss(DeblurLoss):
 
 # mean-field Langevin Dynamics
 class LangevinGD(torch.optim.Optimizer):
-    def __init__(self, params, alpha_, lambda_, eta_, m, snr):
-        defaults = dict(alpha_=alpha_, lambda_=lambda_, eta_=eta_, m=m, snr=snr)
+    def __init__(self, params, alpha_, lambda_, eta_, m):
+        defaults = dict(alpha_=alpha_, lambda_=lambda_, eta_=eta_, m=m)
         super(LangevinGD, self).__init__(params, defaults)
         self.param_means = []
+        self.param_vars = []
         self.score_norms = []
         self.grad_norms = []
 
@@ -116,22 +138,20 @@ class LangevinGD(torch.optim.Optimizer):
                 alpha_ = group["alpha_"]
                 lambda_ = group["lambda_"]
                 lr = group["m"] * group["eta_"]
-                snr = group["snr"]
-
                 noise = torch.randn_like(p.data)
 
                 grad = p.grad.data
                 grad_norm = torch.norm(grad.reshape(grad.shape[0], -1), dim=-1).mean()
                 score_norm = torch.norm(score_fn.reshape(score_fn.shape[0], -1), dim=-1).mean()
-                noise_norm = torch.norm(noise.reshape(noise.shape[0], -1), dim=-1).mean()
 
-                grad_stepsize = (noise_norm / grad_norm) ** 2 * 2 * lr * alpha_ * 0.5
-                score_stepsize = (snr * noise_norm / score_norm) ** 2 * 2 * lr * lambda_
+                grad_stepsize = lr * alpha_ * 0.5
+                score_stepsize = lr * lambda_
 
-                p_mean = p.data + (1 - score_stepsize) * p.data - score_stepsize * score_fn - grad_stepsize * grad
+                p_mean = (1 - score_stepsize) * p.data - score_stepsize * score_fn - grad_stepsize * grad
                 p.data = p_mean + math.sqrt(2 * score_stepsize) * noise
 
                 self.param_means.append(torch.mean(p.data.detach().clone()).cpu().numpy())
+                self.param_vars.append(torch.var(p.data.detach().clone()).cpu().numpy())
                 self.score_norms.append(score_norm.detach().cpu().numpy())
                 self.grad_norms.append(grad_norm.detach().cpu().numpy())
                 # The last step does not include any noise

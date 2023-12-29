@@ -1,7 +1,7 @@
 import torch
 from tqdm import tqdm
 
-from app.model import E, normalize, get_score
+from app.model import E, normalize, get_score, clip_grad_norm_
 from app.model import ImageLoss, KernelLoss
 from app.model import LangevinGD
 from app.utils import save_estimateds, plot_ave_losses, plot_params
@@ -41,8 +41,8 @@ def optimize(
     torch.cuda.empty_cache()
 
     # optimizer
-    optim_i = LangevinGD(model_i.parameters(), alpha_, lambda_, eta_, num_scales, snr=0.16)
-    optim_k = LangevinGD(model_k.parameters(), alpha_, lambda_, eta_, num_scales, snr=0.16)
+    optim_i = LangevinGD(model_i.parameters(), alpha_, lambda_, eta_, num_scales)
+    optim_k = LangevinGD(model_k.parameters(), alpha_, lambda_, eta_, num_scales)
 
     timesteps = torch.linspace(1.0, eps, num_steps, device=device)
     ave_losses = []
@@ -100,7 +100,7 @@ def optimize(
                 save_estimateds(fname, path_to_save, estimated_i=normalize(estimated_i.detach().clone()), estimated_k=normalize(estimated_k.detach().clone()))
                 # plot each values
                 plot_ave_losses(path_to_save, losses=ave_losses)
-                plot_params("image", path_to_save, params=optim_i.param_means, scores=optim_i.score_norms, grads=optim_i.grad_norms)
-                plot_params("kernel", path_to_save, params=optim_k.param_means, scores=optim_k.score_norms, grads=optim_k.grad_norms)
+                plot_params("image", path_to_save, means=optim_i.param_means, vars=optim_i.param_vars, scores=optim_i.score_norms, grads=optim_i.grad_norms)
+                plot_params("kernel", path_to_save, means=optim_k.param_means, vars=optim_k.param_vars, scores=optim_k.score_norms, grads=optim_k.grad_norms)
 
     return normalize(estimated_i.detach().clone()), normalize(estimated_k.detach().clone())

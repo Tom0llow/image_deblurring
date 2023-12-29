@@ -6,9 +6,9 @@ if __name__ == "__main__":
 
     folder_to_save = "image/results/celebA"
 
-    blur_image_path = "dataset/blurred_celebA/blur_images/000180.jpg"
-    blur_kernel_path = "dataset/blurred_celebA/blur_kernels/000180.jpg"
-    sharp_image_path = "dataset/blurred_celebA/sharp_images/000180.jpg"
+    blur_image_path = "dataset/blurred_celebA/blur_images/000010.jpg"
+    blur_kernel_path = "dataset/blurred_celebA/blur_kernels/000010.jpg"
+    sharp_image_path = "dataset/blurred_celebA/sharp_images/000010.jpg"
     # save original images(kernels)
     fname = blur_image_path.split("/")[-1]
     save_originals(fname, paths=[blur_image_path, sharp_image_path, blur_kernel_path], path_to_save=folder_to_save)
@@ -21,6 +21,7 @@ if __name__ == "__main__":
     if params["blind"] is True:
         from app.blind_deconvolution import run
 
+        print("Blind Deconvolution")
         run(
             params,
             path_to_save=folder_to_save,
@@ -33,6 +34,7 @@ if __name__ == "__main__":
     else:
         from app.deconvolution import run
 
+        print("Deconvolution(use known kernel)")
         run(
             params,
             path_to_save=folder_to_save,

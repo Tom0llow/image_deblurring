@@ -61,7 +61,7 @@ celerybeat-schedule
 __MACOSX/
 
 # for project
-# !image/results/celebA/outputs/
+!image/results/celebA/outputs/
 
 app/__pycache__/
 blur_data_generation/__pycache__/

@@ -6,7 +6,7 @@ from app.non_blind_optimizer import optimize
 from app.utils import save_estimateds
 
 
-# Deconvolution (use known kernel)
+# Deconvolution(use known kernel)
 def run(params, path_to_save, blur_image_path, kernel_image_path, image_ckpt_path, device="cuda"):
     # load blur image
     try:

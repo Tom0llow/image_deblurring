@@ -60,21 +60,26 @@ def plot_ave_losses(path_to_save, losses):
     plt.clf()
 
 
-def plot_params(class_name, path_to_save, params, scores, grads):
+def plot_params(class_name, path_to_save, means, vars, scores, grads):
     # init
-    plt.figure(figsize=(24, 8))
-    # plot params
-    plt.subplot(131, title="param mean")
-    plt.plot(np.arange(len(params)), params, marker="o", color="b")
+    plt.figure(figsize=(20, 12))
+    # plot param means
+    plt.subplot(221, title="param mean")
+    plt.plot(np.arange(len(means)), means, marker="o", color="b")
+    plt.xlabel("time step")
+    plt.grid()
+    # plot param vars
+    plt.subplot(222, title="param var")
+    plt.plot(np.arange(len(vars)), vars, marker="o", color="m")
     plt.xlabel("time step")
     plt.grid()
     # plot scores
-    plt.subplot(132, title="score norm")
+    plt.subplot(223, title="score norm")
     plt.plot(np.arange(len(scores)), scores, marker="^", color="g")
     plt.xlabel("time step")
     plt.grid()
     # plot grads
-    plt.subplot(133, title="grad norm")
+    plt.subplot(224, title="grad norm")
     plt.plot(np.arange(len(grads)), grads, marker="x", color="r")
     plt.xlabel("time step")
     plt.grid()
