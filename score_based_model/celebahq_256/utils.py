@@ -7,7 +7,7 @@ from score_based_model.score_sde_pytorch.configs.ve import celebahq_256_ncsnpp_c
 from score_based_model.score_sde_pytorch.sde_lib import VESDE
 
 
-def get_image_score_model(ckpt_path, device="cuda"):
+def get_celebahq_256_score_model(ckpt_path, device="cuda"):
     config = configs.get_config()
     sde = VESDE(
         sigma_min=config.model.sigma_min,

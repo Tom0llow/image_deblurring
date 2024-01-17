@@ -1,20 +1,21 @@
 import os
 import torch
 from torchvision.utils import make_grid
+import torchvision.transforms as transforms
+from torchvision.datasets import MNIST
 import numpy as np
 import matplotlib.pyplot as plt
 
-from score_based_model.kernel.model import ScoreNet
-from score_based_model.kernel.dataset import Kernel_Img_Dataset, ImageTransform
+from score_based_model.mnist.model import ScoreNet
 
 
-def get_kernel_score_model(ckpt_path, marginal_prob_std_fn, device="cuda"):
+def get_mnist_score_model(ckpt_path, marginal_prob_std_fn, device="cuda"):
     ckpt = torch.load(ckpt_path, map_location=device)
     score_model = torch.nn.DataParallel(ScoreNet(marginal_prob_std=marginal_prob_std_fn))
     score_model = score_model.to(device)
     score_model.load_state_dict(ckpt)
 
-    print("Loaded kernel score model.")
+    print("Loaded mnist score model.")
     return score_model
 
 
@@ -29,9 +30,4 @@ def save_samples(samples, sample_batch_size, path_to_save, filename):
 
 
 def create_dataset(folder):
-    train_img_list = []
-    for path in os.listdir(folder + "/train"):
-        train_img_list.append(os.path.join(folder + "/train", path))
-
-    org_dataset = Kernel_Img_Dataset(file_list=train_img_list, transform=ImageTransform())
-    return org_dataset
+    return MNIST(folder, train=True, transform=transforms.ToTensor(), download=True)

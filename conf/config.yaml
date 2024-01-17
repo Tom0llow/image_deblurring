@@ -1,9 +1,10 @@
 device: "cuda"
-blind : false
+blind: false
 
-num_steps: 5000
-num_scales: 3000
-batch_size: 64
-save_interval: 1
-lambda_: 0.01 # regularization coefficient
-eta_: 0.001 # learning rate
+num_scales: 10000
+lambda_: 0.0001 # regularization coefficient
+eta_: 0.01 # learning rate
+
+num_steps: 20000
+save_interval: 500
+batch_size: 512 # <= num_scales

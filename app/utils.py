@@ -49,43 +49,42 @@ def save_estimateds(fname, path_to_save, estimated_i, estimated_k=None):
     print("Saved estimated image")
 
 
-def plot_ave_losses(path_to_save, losses):
-    plt.figure(figsize=(12, 8))
-    plt.plot(np.arange(len(losses)), losses, marker="o")
-    plt.xlabel("time step")
-    plt.title("Average Deblurring Loss")
-    plt.grid()
-    plt.savefig(os.path.join(path_to_save + "/outputs", "ave_losses.png"))
-    plt.close()
-    plt.clf()
+def plot_graphs(path_to_save, losses, image_grads, kernel_grads=None):
+    if kernel_grads is not None:
+        # blind deconvolution
+        plt.figure(figsize=(30, 8))
+        # plot losses
+        plt.subplot(131, title="loss")
+        plt.plot(np.arange(len(losses)), losses, marker="o", color="b")
+        plt.xlabel("time step")
+        plt.grid()
+        # plot image grads
+        plt.subplot(132, title="image gradient")
+        plt.plot(np.arange(len(image_grads)), image_grads, marker="o", color="m")
+        plt.xlabel("time step")
+        plt.grid()
+        # plot kernel grads
+        plt.subplot(133, title="kernel gradient")
+        plt.plot(np.arange(len(kernel_grads)), kernel_grads, marker="o", color="r")
+        plt.xlabel("time step")
+        plt.grid()
+    else:
+        # non-blind deconvolution
+        plt.figure(figsize=(20, 8))
+        # plot losses
+        plt.subplot(121, title="loss")
+        plt.plot(np.arange(len(losses)), losses, marker="o", color="b")
+        plt.xlabel("time step")
+        plt.grid()
+        # plot image grads
+        plt.subplot(122, title="image gradient")
+        plt.plot(np.arange(len(image_grads)), image_grads, marker="o", color="m")
+        plt.xlabel("time step")
+        plt.grid()
 
-
-def plot_params(class_name, path_to_save, means, vars, scores, grads):
-    # init
-    plt.figure(figsize=(20, 12))
-    # plot param means
-    plt.subplot(221, title="param mean")
-    plt.plot(np.arange(len(means)), means, marker="o", color="b")
-    plt.xlabel("time step")
-    plt.grid()
-    # plot param vars
-    plt.subplot(222, title="param var")
-    plt.plot(np.arange(len(vars)), vars, marker="o", color="m")
-    plt.xlabel("time step")
-    plt.grid()
-    # plot scores
-    plt.subplot(223, title="score norm")
-    plt.plot(np.arange(len(scores)), scores, marker="^", color="g")
-    plt.xlabel("time step")
-    plt.grid()
-    # plot grads
-    plt.subplot(224, title="grad norm")
-    plt.plot(np.arange(len(grads)), grads, marker="x", color="r")
-    plt.xlabel("time step")
-    plt.grid()
     # set options
-    plt.suptitle(f"[{class_name}]")
     plt.tight_layout()
-    plt.savefig(os.path.join(path_to_save + "/outputs", f"{class_name}_params.png"))
+    # save
+    plt.savefig(os.path.join(path_to_save + "/outputs", "graphs.png"))
     plt.close()
     plt.clf()

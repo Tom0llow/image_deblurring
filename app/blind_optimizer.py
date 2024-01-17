@@ -1,23 +1,26 @@
 import torch
 from tqdm import tqdm
 
-from app.model import E, normalize, get_score, clip_grad_norm_
-from app.model import ImageLoss, KernelLoss
-from app.model import LangevinGD
-from app.utils import save_estimateds, plot_ave_losses, plot_params
+
+from app.models.functions import E, normalize
+from app.models.utils import get_score, clip_grad_norm_
+from app.models.model import ImageLoss, KernelLoss
+from app.models.LangevinGD import LangevinGD
+from app.utils import save_estimateds, plot_graphs
 
 
 # Alternating Optimization
-def optimize(blur_image, image_score_fn, kernel_score_fn, lambda_, eta_, fname, path_to_save, save_interval=100, num_steps=1000, num_scales=10000, batch_size=64, eps=1e-3, device="cuda"):
-    # Initial samples
-    t = torch.ones(num_scales, device=device)
+def optimize(blur_image, image_size, kernel_size, image_score_fn, kernel_score_fn, lambda_, eta_, fname, path_to_save, save_interval=100, num_steps=1000, num_scales=10000, batch_size=64, eps=1e-3, is_rgb=True, device="cuda"):
+    channel, h, w = image_size
+    is_rgb = True if channel == 3 else False
 
-    image_init = torch.randn(num_scales, 3, 256, 256, device=device)
-    kernel_init = torch.randn(num_scales, 1, 64, 64, device=device)
+    # Initial samples
+    image_init = torch.randn(num_scales, *image_size, device=device)
+    kernel_init = torch.randn(num_scales, *kernel_size, device=device)
 
     # model
     blur_image = normalize(blur_image)
-    model_i = ImageLoss(blur_image, image_init, device=device)
+    model_i = ImageLoss(blur_image, image_init, is_rgb, device=device)
     model_k = KernelLoss(blur_image, kernel_init, device=device)
     del image_init
     del kernel_init
@@ -29,8 +32,10 @@ def optimize(blur_image, image_score_fn, kernel_score_fn, lambda_, eta_, fname, 
 
     timesteps = torch.linspace(1.0, eps, num_steps, device=device)
     ave_losses = []
+    image_grads = []
+    kernel_grads = []
 
-    estimated_i = E(model_i.state_dict()["x_i"])
+    estimated_i = E(model_i.state_dict()["x_i"]).repeat(3, 1, 1)
     estimated_k = E(model_k.state_dict()["x_k"])
     with tqdm(timesteps) as tqdm_epoch:
         for i, t in enumerate(tqdm_epoch):
@@ -39,51 +44,50 @@ def optimize(blur_image, image_score_fn, kernel_score_fn, lambda_, eta_, fname, 
             # optimize image
             loss_i = model_i(estimated_k.detach().clone())
 
-            if not torch.isnan(loss_i):
-                with torch.no_grad():
-                    image_score = get_score(model_i.state_dict()["x_i"], t, image_score_fn, num_scales, batch_size)
-                ## langevin step
-                optim_i.zero_grad(set_to_none=True)
-                loss_i.backward()
-                estimated_i = optim_i.step(image_score)
+            with torch.no_grad():
+                image_score = get_score(model_i.state_dict()["x_i"], t, image_score_fn, num_scales, batch_size)
+            ## langevin step
+            optim_i.zero_grad(set_to_none=True)
+            loss_i.backward()
+            estimated_i = optim_i.step(image_score)
+            if not is_rgb:
+                estimated_i = estimated_i.repeat(3, 1, 1)
 
-                del image_score
-                torch.cuda.empty_cache()
+            del image_score
+            torch.cuda.empty_cache()
 
-                ave_loss += loss_i
+            ave_loss += loss_i
             loss_i.detach_()
 
             # optimize kernel
             loss_k = model_k(estimated_i.detach().clone())
-            if not torch.isnan(loss_k):
-                with torch.no_grad():
-                    kernel_score = get_score(model_k.state_dict()["x_k"], t, kernel_score_fn, num_scales, batch_size)
-                ## langevin step
-                optim_k.zero_grad(set_to_none=True)
-                loss_k.backward()
-                estimated_k = optim_k.step(kernel_score)
+            with torch.no_grad():
+                kernel_score = get_score(model_k.state_dict()["x_k"], t, kernel_score_fn, num_scales, batch_size)
+            ## langevin step
+            optim_k.zero_grad(set_to_none=True)
+            loss_k.backward()
+            estimated_k = optim_k.step(kernel_score)
 
-                del kernel_score
-                torch.cuda.empty_cache()
+            del kernel_score
+            torch.cuda.empty_cache()
 
-                ave_loss += loss_k
+            ave_loss += loss_k
             loss_k.detach_()
 
-            if ave_loss == 0.0:
-                break
-            else:
-                ave_loss /= 2
+            ave_loss /= 2
             ave_losses.append(ave_loss.detach().cpu().numpy())
+            image_grad_norm = torch.norm(optim_i.param_groups[0]["params"][0].grad)
+            image_grads.append(image_grad_norm.detach().cpu().numpy())
+            kernel_grad_norm = torch.norm(optim_i.param_groups[0]["params"][0].grad)
+            kernel_grads.append(kernel_grad_norm.detach().cpu().numpy())
 
-            tqdm_epoch.set_description(f"Average Deblur Loss = {ave_loss:.5f}")
+            tqdm_epoch.set_description(f"Loss:{ave_loss:5f}, Image Grad Norm:{image_grad_norm:5f}, Kernel Grad Norm:{kernel_grad_norm:5f}")
 
             # save
             if i % save_interval == 0:
                 # save image and kernel
                 save_estimateds(fname, path_to_save, estimated_i=normalize(estimated_i.detach().clone()), estimated_k=normalize(estimated_k.detach().clone()))
-                # plot each values
-                plot_ave_losses(path_to_save, losses=ave_losses)
-                plot_params("image", path_to_save, means=optim_i.param_means, vars=optim_i.param_vars, scores=optim_i.score_norms, grads=optim_i.grad_norms)
-                plot_params("kernel", path_to_save, means=optim_k.param_means, vars=optim_k.param_vars, scores=optim_k.score_norms, grads=optim_k.grad_norms)
+                # plot
+                plot_graphs(path_to_save, losses=ave_losses, image_grads=image_grads, kernel_grads=kernel_grads)
 
     return normalize(estimated_i.detach().clone()), normalize(estimated_k.detach().clone())

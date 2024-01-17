@@ -63,10 +63,14 @@ __MACOSX/
 # for project
 app/__pycache__/
 blur_data_generation/__pycache__/
-data/
-dataset/
+data/raw/
+data/results_sharp/
+dataset/blured_celebahq_256/
+dataset/blured_mnist/
+dataset/celebahq_256/
+dataset/mnist/
+dataset/RandomMotionBlur/
 image/
-# !image/results/celebA/outputs/
 outputs/
 score_based_model/__pycache__/
 score_based_model/checkpoints/

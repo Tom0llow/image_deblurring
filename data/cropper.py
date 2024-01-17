@@ -2,7 +2,6 @@ import os
 import numpy as np
 from PIL import Image
 import cv2
-from tqdm import tqdm
 
 
 class Cropper:
@@ -37,13 +36,3 @@ class Cropper:
         if self.path_to_save is None:
             raise Exception("Please create Trajectory instance with path_to_save")
         cv2.imwrite(os.path.join(self.path_to_save, self.image_path.split("/")[-1]), self.result)
-
-
-if __name__ == "__main__":
-    folder = "./data/raw/celebA"
-    folder_to_save = "./data/results_sharp/celebA"
-
-    for path in tqdm(os.listdir(folder)):
-        # print(path)
-        Cropper(os.path.join(folder, path), path__to_save=folder_to_save, size=(256, 256)).cropper(save=True)
-    print("Complete Cropped !")

@@ -114,13 +114,3 @@ class Dataset:
         else:
             path = self.path
             self.train_test_split(path=path, train_dir=train_dir, val_dir=val_dir, test_dir=test_dir)
-
-
-if __name__ == "__main__":
-    # folder = "./data/raw/RandomMotionBlur"
-    # folder_to_save = "./dataset/RandomMotionBlur"
-
-    folder = './data/results_sharp/celebA'
-    folder_to_save = "./dataset/celebA"
-
-    Dataset(path=folder, path_to_save=folder_to_save).split_dataset()

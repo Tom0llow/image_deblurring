@@ -1,42 +1,30 @@
 import os
 import cv2
-import numpy as np
-from generate_PSF import PSF
-from generate_trajectory import Trajectory
-from tqdm import tqdm
 import torch
 import torchvision.transforms as transforms
 from torchvision.io import read_image
 
+from generate_PSF import PSF
 from PSF import scale
 
 
-def create_results_dir(path_to_save):
-    for sub_dir_name in ["sharp_images", "blur_images", "blur_kernels"]:
-        try:
-            sub_dir = os.path.join(path_to_save, sub_dir_name)
-            os.mkdir(sub_dir)
-        except FileExistsError:
-            print(f"- {sub_dir} is already exist.")
-
-
 class BlurImage(object):
-    def __init__(self, image_path, PSFs=None, part=None, path_to_save=None, device="cuda"):
+    def __init__(self, image_path, PSFs=None, part=None, path_to_save=None, is_rgb=True, device="cuda"):
         """
-        :param image_path: path to square, RGB image.
+        :param image_path: path to square image.
         :param PSFs: array of Kernels.
         :param part: int number of kernel to use.
         :param path__to_save: folder to save results.
         """
+        self.is_rgb = is_rgb
         self.device = device
 
         if os.path.isfile(image_path):
             self.image_path = image_path
             self.original = read_image(self.image_path).to(device=self.device)
+            self.original = self.original if self.is_rgb else self.original.repeat(3, 1, 1)
             self.shape = self.original.size()
-            if len(self.shape) < 3:
-                raise Exception("We support only RGB images yet.")
-            elif self.shape[1] != self.shape[2]:
+            if self.shape[1] != self.shape[2]:
                 raise Exception("We support only square images yet.")
         else:
             raise Exception("Not correct path to image.")
@@ -65,9 +53,13 @@ class BlurImage(object):
         return x
 
     def tensor_to_ndarray(self, x):
-        x = x.permute(1, 2, 0)
-        x = x.cpu().detach().numpy()
-        x = cv2.cvtColor(x, cv2.COLOR_RGB2BGR)
+        if self.is_rgb:
+            x = x.permute(1, 2, 0)
+            x = x.cpu().detach().numpy()
+            x = cv2.cvtColor(x, cv2.COLOR_RGB2BGR)
+        else:
+            x = 0.114 * x[0, :, :] + 0.587 * x[1, :, :] + 0.299 * x[2, :, :]
+            x = x.cpu().detach().numpy()
         return x
 
     def blur_image(self, save=False):
@@ -133,18 +125,3 @@ class BlurImage(object):
             cv2.imwrite(os.path.join(self.path_to_save + "/sharp_images", self.image_path.split("/")[-1]), self.original)  # sharp_image
             cv2.imwrite(os.path.join(self.path_to_save + "/blur_kernels", self.image_path.split("/")[-1]), scale(psf, 0, 255))  # psf
             cv2.imwrite(os.path.join(self.path_to_save + "/blur_images", self.image_path.split("/")[-1]), self.result[0] * 255)  # blur_iamge
-
-
-if __name__ == "__main__":
-    folder = "./dataset/celebA/test"
-    folder_to_save = "./dataset/blurred_celebA"
-    params = [0.01, 0.009, 0.008, 0.007, 0.005, 0.003]
-
-    create_results_dir(path_to_save=folder_to_save)
-    for path in tqdm(os.listdir(folder)):
-        # print(path)
-        trajectory = Trajectory(canvas=64, max_len=60, expl=np.random.choice(params)).fit()
-        psf = PSF(canvas=64, trajectory=trajectory).fit()
-        BlurImage(os.path.join(folder, path), PSFs=psf, path_to_save=folder_to_save, part=np.random.choice([1, 2, 3])).blur_image(save=True)
-
-    print("Complete generated blur image !")

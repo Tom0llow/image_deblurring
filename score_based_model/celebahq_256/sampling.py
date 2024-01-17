@@ -6,7 +6,7 @@ import matplotlib.pyplot as plt
 import numpy as np
 from tqdm import tqdm
 
-from score_based_model.celebahq_256.utils import get_image_score_model
+from score_based_model.celebahq_256.utils import get_celebahq_256_score_model
 
 
 def sampling(sde, score_model, batch_size=64, snr=0.16, eps=1e-3, device="cuda"):
@@ -35,7 +35,7 @@ def sampling(sde, score_model, batch_size=64, snr=0.16, eps=1e-3, device="cuda")
 
 
 def run(image_ckpt_path, path_to_save, filename, device="cuda"):
-    sde, image_score_model = get_image_score_model(image_ckpt_path, device=device)
+    sde, image_score_model = get_celebahq_256_score_model(image_ckpt_path, device=device)
 
     batch_size = 64
 
