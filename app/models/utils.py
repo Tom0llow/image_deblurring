@@ -1,6 +1,8 @@
 import torch
 import math
 
+from app.utils import save_estimateds
+
 
 def get_score(x, t, score_fn, num_scales, batch_size):
     def get_batch_score(x_batch, t, score_fn, batch_size):
@@ -44,3 +46,38 @@ def clip_grad_norm_(grad, max_norm, norm_type):
         g.detach().mul_(clip_coef_clamped_device)
 
     return total_norm
+
+
+class EarlyStopping:
+    def __init__(self, fname, path_to_save, patience=100, verbose=False):
+        self.fname = fname
+        self.path_to_save = path_to_save
+        self.patience = patience
+        self.verbose = verbose
+        self.counter = 0
+        self.best_score = None
+        self.early_stop = False
+        self.loss_min = float("inf")
+
+    def __call__(self, loss, estimated_i, estimated_k=None):
+        score = -loss
+
+        if self.best_score is None:
+            self.best_score = score
+            self.save(loss, estimated_i, estimated_k)
+        elif score < self.best_score:
+            self.counter += 1
+            if self.verbose:
+                print(f"EarlyStopping counter: {self.counter} out of {self.patience}")
+            if self.counter >= self.patience:
+                self.early_stop = True
+        else:
+            self.best_score = score
+            self.save(loss, estimated_i, estimated_k)
+            self.counter = 0
+
+    def save(self, loss, estimated_i, estimated_k=None):
+        if self.verbose:
+            print(f"Loss decreased ({self.loss_min:.6f} --> {loss:.6f}).  Saving estimateds ...")
+        save_estimateds(self.fname, self.path_to_save, estimated_i, estimated_k)
+        self.loss_min = loss

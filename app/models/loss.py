@@ -1,4 +1,5 @@
 import torch
+import torchvision.transforms.functional as F
 
 from app.models.functions import E, normalize, conv2D
 
@@ -14,8 +15,8 @@ class DeblurLoss(torch.nn.Module):
 class ImageLoss(DeblurLoss):
     def __init__(self, blur_image, image_init, is_rgb=True, device="cuda"):
         super().__init__()
-        self.device = device
         self.is_rgb = is_rgb
+        self.device = device
         self.blur_image = blur_image.to(self.device)
         self.x_i = torch.nn.Parameter(image_init.requires_grad_(True).to(device))
 
@@ -29,8 +30,10 @@ class ImageLoss(DeblurLoss):
 
 
 class KernelLoss(DeblurLoss):
-    def __init__(self, blur_image, kernel_init, device="cuda"):
+    def __init__(self, blur_image, kernel_init, kernel_size=(64, 64), is_resize=False, device="cuda"):
         super().__init__()
+        self.kernel_size = kernel_size
+        self.is_resize = is_resize
         self.device = device
         self.blur_image = blur_image.to(device)
         self.x_k = torch.nn.Parameter(kernel_init.requires_grad_(True).to(device))
@@ -38,7 +41,10 @@ class KernelLoss(DeblurLoss):
     def forward(self, image):
         real_b = self.blur_image
         image = normalize(image.to(self.device))
-        estimated_k = normalize(E(self.x_k).squeeze())
+        estimated_k = normalize(E(self.x_k))
+        if self.is_resize:
+            estimated_k = F.resize(estimated_k, size=self.kernel_size)
+        estimated_k.squeeze_()
 
         estimated_b = conv2D(image, estimated_k)
         return torch.norm(real_b - estimated_b) ** 2

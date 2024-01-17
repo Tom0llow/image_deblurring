@@ -1,7 +1,7 @@
 import torch
 import math
 
-from models.model import E
+from app.models.loss import E
 
 
 # mean-field Langevin Dynamics
