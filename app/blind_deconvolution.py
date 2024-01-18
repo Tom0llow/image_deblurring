@@ -11,7 +11,7 @@ from app.utils import save_estimateds, plot_graphs
 
 
 # Alternating Optimization
-def optimize(blur_image, image_size, kernel_size, image_score_fn, kernel_score_fn, lambda_, eta_, fname, path_to_save, save_interval=100, num_steps=1000, num_scales=10000, batch_size=64, eps=1e-3, is_rgb=True, device="cuda"):
+def optimize(blur_image, image_size, kernel_size, image_score_fn, kernel_score_fn, lambda_, eta_, fname, path_to_save, save_interval=100, num_steps=1000, num_scales=10000, batch_size=64, patience=100, eps=1e-3, is_rgb=True, device="cuda"):
     channel, h, w = image_size
     is_rgb = True if channel == 3 else False
     is_resize = True if kernel_size != (64, 64) else False
@@ -41,7 +41,7 @@ def optimize(blur_image, image_size, kernel_size, image_score_fn, kernel_score_f
     estimated_k = E(model_k.state_dict()["x_k"])
     if is_resize:
         estimated_k = F.resize(estimated_k, size=kernel_size)
-    earlyStopping = EarlyStopping(fname, path_to_save, patience=100, verbose=True)
+    earlyStopping = EarlyStopping(fname, path_to_save, patience=patience, verbose=True)
     with tqdm(timesteps) as tqdm_epoch:
         for i, t in enumerate(tqdm_epoch):
             ave_loss = 0.0
@@ -88,9 +88,8 @@ def optimize(blur_image, image_size, kernel_size, image_score_fn, kernel_score_f
 
             tqdm_epoch.set_description(f"Loss:{ave_loss:5f}, Image Grad Norm:{image_grad_norm:5f}, Kernel Grad Norm:{kernel_grad_norm:5f}")
             if i % save_interval == 0:
-                # plot
                 plot_graphs(path_to_save, losses=ave_losses, image_grads=image_grads, kernel_grads=kernel_grads)
-
+            # save best estimateds
             earlyStopping(ave_loss, estimated_i=normalize(estimated_i.detach().clone()), estimated_k=normalize(estimated_k.detach().clone()))
             if earlyStopping.early_stop:
                 print("Early Stopping!")

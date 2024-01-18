@@ -4,6 +4,7 @@ num_scales: 10000
 lambda_: 0.0001 # regularization coefficient
 eta_: 0.01 # learning rate
 
-num_steps: 50000
-save_interval: 500
-batch_size: 512 # <= num_scales
+num_steps: 500000
+save_interval: 100
+score_batch_size: 256 # <= num_scales
+patience: 10000 # early stopping rate

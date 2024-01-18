@@ -60,6 +60,7 @@ if __name__ == "__main__":
         save_interval=params["save_interval"],
         num_steps=params["num_steps"],
         num_scales=params["num_scales"],
-        batch_size=params["batch_size"],
+        batch_size=params["score_batch_size"],
+        patience=params["patience"],
         device=device,
     )

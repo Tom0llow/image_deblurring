@@ -14,9 +14,9 @@ if __name__ == "__main__":
     create_results_dir(class_name="mnist_blind_deconvolution")
     folder_to_save = "image/results/mnist_blind_deconvolution"
 
-    blur_image_path = "dataset/blured_mnist/blur_images/img_473.jpg"
-    blur_kernel_path = "dataset/blured_mnist/blur_kernels/img_473.jpg"
-    sharp_image_path = "dataset/blured_mnist/sharp_images/img_473.jpg"
+    blur_image_path = "dataset/blured_mnist/blur_images/img_3.jpg"
+    blur_kernel_path = "dataset/blured_mnist/blur_kernels/img_3.jpg"
+    sharp_image_path = "dataset/blured_mnist/sharp_images/img_3.jpg"
     # save original images(kernels)
     fname = blur_image_path.split("/")[-1]
     save_originals(fname, paths=[blur_image_path, sharp_image_path, blur_kernel_path], path_to_save=folder_to_save)
@@ -67,6 +67,7 @@ if __name__ == "__main__":
         save_interval=params["save_interval"],
         num_steps=params["num_steps"],
         num_scales=params["num_scales"],
-        batch_size=params["batch_size"],
+        batch_size=params["score_batch_size"],
+        patience=params["patience"],
         device=device,
     )

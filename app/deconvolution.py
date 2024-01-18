@@ -8,7 +8,7 @@ from app.models.LangevinGD import LangevinGD
 from app.utils import save_estimateds, plot_graphs
 
 
-def optimize(blur_image, blur_kernel, image_size, image_score_fn, lambda_, eta_, fname, path_to_save, save_interval=100, num_steps=1000, num_scales=10000, batch_size=64, eps=1e-3, device="cuda"):
+def optimize(blur_image, blur_kernel, image_size, image_score_fn, lambda_, eta_, fname, path_to_save, save_interval=100, num_steps=1000, num_scales=10000, batch_size=64, patience=100, eps=1e-3, device="cuda"):
     channel, h, w = image_size
     is_rgb = True if channel == 3 else False
 
@@ -27,7 +27,7 @@ def optimize(blur_image, blur_kernel, image_size, image_score_fn, lambda_, eta_,
     timesteps = torch.linspace(1.0, eps, num_steps, device=device)
     ave_losses = []
     image_grads = []
-    earlyStopping = EarlyStopping(fname, path_to_save, patience=100, verbose=True)
+    earlyStopping = EarlyStopping(fname, path_to_save, patience=patience, verbose=True)
     with tqdm(timesteps) as tqdm_epoch:
         for i, t in enumerate(tqdm_epoch):
             ave_loss = 0.0
@@ -56,7 +56,7 @@ def optimize(blur_image, blur_kernel, image_size, image_score_fn, lambda_, eta_,
             tqdm_epoch.set_description(f"Loss:{ave_loss:5f}, Image Grad Norm:{image_grad_norm:5f}")
             if i % save_interval == 0:
                 plot_graphs(path_to_save, losses=ave_losses, image_grads=image_grads)
-
+            # save best estimateds
             earlyStopping(ave_loss, estimated_i=normalize(estimated_i.detach().clone()))
             if earlyStopping.early_stop:
                 print("Early Stopping!")
