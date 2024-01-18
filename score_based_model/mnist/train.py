@@ -11,8 +11,8 @@ from torch.utils.data import DataLoader
 import torchvision.transforms as transforms
 import torchvision
 
-from score_based_model.kernel.model import ScoreNet
-from score_based_model.kernel.functions import marginal_prob_std, diffusion_coeff
+from score_based_model.mnist.model import ScoreNet
+from score_based_model.mnist.functions import marginal_prob_std, diffusion_coeff
 
 
 def loss_fn(model, x, marginal_prob_std, eps=1e-8):

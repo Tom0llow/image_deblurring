@@ -88,7 +88,7 @@ def optimize(blur_image, image_size, kernel_size, image_score_fn, kernel_score_f
 
             tqdm_epoch.set_description(f"Loss:{ave_loss:5f}, Image Grad Norm:{image_grad_norm:5f}, Kernel Grad Norm:{kernel_grad_norm:5f}")
             if i % save_interval == 0:
-                plot_graphs(path_to_save, losses=ave_losses, image_grads=image_grads, kernel_grads=kernel_grads)
+                plot_graphs(fname, path_to_save, losses=ave_losses, image_grads=image_grads, kernel_grads=kernel_grads)
             # save best estimateds
             earlyStopping(ave_loss, estimated_i=normalize(estimated_i.detach().clone()), estimated_k=normalize(estimated_k.detach().clone()))
             if earlyStopping.early_stop:

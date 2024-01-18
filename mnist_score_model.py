@@ -9,13 +9,13 @@ if __name__ == "__main__":
     args = sys.argv
 
     if len(args) < 2:
-        raise Exception("Arguments are too short.")
+        raise Exception("Arguments are too short. Please input arguments '--train' or '--sampling'.")
 
     elif args[1] == "--train":
         print("Run train & sampling")
         # train
-        folder = "./dataset"
-        folder_to_save = "./checkpoints/mnist"
+        folder = "./dataset/mnist"
+        folder_to_save = "./score_based_model/checkpoints/mnist"
         dataset = create_dataset(folder)
         train(dataset, folder_to_save)
         # sampling

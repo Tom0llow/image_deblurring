@@ -17,9 +17,9 @@ class LangevinGD(torch.optim.Optimizer):
                 lambda_ = group["lambda_"]
                 lr = group["m"] * group["eta_"]
                 noise = torch.randn_like(p.data)
-                grad = p.grad.data
 
-                grad_stepsize = lr * 0.5
+                grad = p.grad.data
+                grad_stepsize = lr
                 score_stepsize = lr * lambda_
 
                 p_mean = (1 - score_stepsize) * p.data + score_stepsize * score_fn - grad_stepsize * grad

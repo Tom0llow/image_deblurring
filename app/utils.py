@@ -49,7 +49,7 @@ def save_estimateds(fname, path_to_save, estimated_i, estimated_k=None):
     print("Saved estimated image")
 
 
-def plot_graphs(path_to_save, losses, image_grads, kernel_grads=None):
+def plot_graphs(fname, path_to_save, losses, image_grads, kernel_grads=None):
     if kernel_grads is not None:
         # blind deconvolution
         plt.figure(figsize=(30, 8))
@@ -85,6 +85,6 @@ def plot_graphs(path_to_save, losses, image_grads, kernel_grads=None):
     # set options
     plt.tight_layout()
     # save
-    plt.savefig(os.path.join(path_to_save + "/outputs", "graphs.png"))
+    plt.savefig(os.path.join(path_to_save + "/outputs", "graphs_" + fname))
     plt.close()
     plt.clf()

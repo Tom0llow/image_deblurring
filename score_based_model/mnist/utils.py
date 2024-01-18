@@ -7,6 +7,7 @@ import numpy as np
 import matplotlib.pyplot as plt
 
 from score_based_model.mnist.model import ScoreNet
+from score_based_model.mnist.dataset import Mnist_Img_Dataset, ImageTransform
 
 
 def get_mnist_score_model(ckpt_path, marginal_prob_std_fn, device="cuda"):
@@ -30,4 +31,9 @@ def save_samples(samples, sample_batch_size, path_to_save, filename):
 
 
 def create_dataset(folder):
-    return MNIST(folder, train=True, transform=transforms.ToTensor(), download=True)
+    train_img_list = []
+    for path in os.listdir(folder + "/train"):
+        train_img_list.append(os.path.join(folder + "/train", path))
+
+    org_dataset = Mnist_Img_Dataset(file_list=train_img_list, transform=ImageTransform())
+    return org_dataset
