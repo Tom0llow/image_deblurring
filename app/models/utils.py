@@ -11,7 +11,7 @@ def get_score(x, t, score_fn, num_scales, batch_size):
         return score_fn(x_batch, vec_t)
 
     score = torch.empty(1, *x.size()[1:], device=x.device)
-
+    assert batch_size <= num_scales, "batch_size should be set to less than or equal to num_scales."
     N = math.ceil(num_scales // batch_size) - 1
     if N == 0:
         score = get_batch_score(x, t, score_fn, batch_size)

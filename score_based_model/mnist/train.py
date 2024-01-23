@@ -33,8 +33,8 @@ def train(dataset, path_to_save, device="cuda"):
     score_model = torch.nn.DataParallel(ScoreNet(marginal_prob_std=marginal_prob_std_fn))
     score_model = score_model.to(device)
 
-    n_epochs = 1000
-    batch_size = 64
+    n_epochs = 10000
+    batch_size = 128
     lr = 1e-4
 
     data_loader = DataLoader(dataset, batch_size=batch_size, shuffle=True, num_workers=os.cpu_count(), pin_memory=True)

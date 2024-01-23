@@ -1,7 +1,7 @@
 import torch
 import torchvision.transforms.functional as F
+import torchvision.transforms as T
 from tqdm import tqdm
-
 
 from app.models.functions import E, normalize
 from app.models.utils import get_score, clip_grad_norm_, EarlyStopping
@@ -36,11 +36,10 @@ def optimize(blur_image, image_size, kernel_size, image_score_fn, kernel_score_f
     ave_losses = []
     image_grads = []
     kernel_grads = []
-
-    estimated_i = E(model_i.state_dict()["x_i"]).repeat(3, 1, 1)
+    estimated_i = E(model_i.state_dict()["x_i"]) if is_rgb else E(model_i.state_dict()["x_i"]).repeat(3, 1, 1)
     estimated_k = E(model_k.state_dict()["x_k"])
     if is_resize:
-        estimated_k = F.resize(estimated_k, size=kernel_size)
+        F.resize(E(model_k.state_dict()["x_k"]), size=kernel_size, interpolation=T.InterpolationMode.NEAREST)
     earlyStopping = EarlyStopping(fname, path_to_save, patience=patience, verbose=True)
     with tqdm(timesteps) as tqdm_epoch:
         for i, t in enumerate(tqdm_epoch):
@@ -72,7 +71,7 @@ def optimize(blur_image, image_size, kernel_size, image_score_fn, kernel_score_f
             loss_k.backward()
             estimated_k = optim_k.step(kernel_score)
             if is_resize:
-                estimated_k = F.resize(estimated_k, size=kernel_size)
+                estimated_k = F.resize(estimated_k, size=kernel_size, interpolation=T.InterpolationMode.NEAREST)
             del kernel_score
             torch.cuda.empty_cache()
 
@@ -83,7 +82,7 @@ def optimize(blur_image, image_size, kernel_size, image_score_fn, kernel_score_f
             ave_losses.append(ave_loss.detach().cpu().numpy())
             image_grad_norm = torch.norm(optim_i.param_groups[0]["params"][0].grad)
             image_grads.append(image_grad_norm.detach().cpu().numpy())
-            kernel_grad_norm = torch.norm(optim_i.param_groups[0]["params"][0].grad)
+            kernel_grad_norm = torch.norm(optim_k.param_groups[0]["params"][0].grad)
             kernel_grads.append(kernel_grad_norm.detach().cpu().numpy())
 
             tqdm_epoch.set_description(f"Loss:{ave_loss:5f}, Image Grad Norm:{image_grad_norm:5f}, Kernel Grad Norm:{kernel_grad_norm:5f}")

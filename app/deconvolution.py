@@ -53,8 +53,8 @@ def optimize(blur_image, blur_kernel, image_size, image_score_fn, lambda_, eta_,
             image_grad_norm = torch.norm(optim_i.param_groups[0]["params"][0].grad)
             image_grads.append(image_grad_norm.detach().cpu().numpy())
 
-            tqdm_epoch.set_description(f"Loss:{ave_loss:5f}, Image Grad Norm:{image_grad_norm:5f}")
             if i % save_interval == 0:
+                tqdm_epoch.set_description(f"Loss:{ave_loss:5f}, Image Grad Norm:{image_grad_norm:5f}")
                 plot_graphs(fname, path_to_save, losses=ave_losses, image_grads=image_grads)
             # save best estimateds
             earlyStopping(ave_loss, estimated_i=normalize(estimated_i.detach().clone()))

@@ -14,7 +14,7 @@ def normalize(x):
     x = x.to(torch.float)
     x = x.view(x.size(0), -1)
     x = x - x.min(1, keepdim=True)[0]
-    x = x / x.max(1, keepdim=True)[0]
+    x = x / (x.max(1, keepdim=True)[0] + 1e-12)
     x = x.view(*size)
     return x
 

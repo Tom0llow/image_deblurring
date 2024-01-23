@@ -1,8 +1,31 @@
 import os
 import shutil
+from contextlib import redirect_stdout
 import cv2
 import matplotlib.pyplot as plt
 import numpy as np
+from tqdm import tqdm
+from functools import partialmethod
+
+
+def run(processes):
+    tqdm.__init__ = partialmethod(tqdm.__init__, disable=True)
+    if processes is None:
+        return
+
+    if len(processes) > 1:
+        p1 = processes[0]
+        p1.start()
+        with redirect_stdout(open(os.devnull, "w")):
+            for p in processes[1:]:
+                p.start()
+            for p in processes[1:]:
+                p.join()
+        p1.join()
+    else:
+        p = processes[0]
+        p.start()
+        p.join()
 
 
 def create_results_dir(class_name, results_path="image/results"):
@@ -18,6 +41,8 @@ def create_results_dir(class_name, results_path="image/results"):
             os.mkdir(sub_dir)
         except FileExistsError:
             print(f"- {sub_dir} is already exist.")
+
+    return class_dir
 
 
 def save_originals(fname, paths, path_to_save):
@@ -44,9 +69,6 @@ def save_estimateds(fname, path_to_save, estimated_i, estimated_k=None):
         estimated_k = estimated_k.permute(1, 2, 0).squeeze()
         estimated_k = estimated_k.cpu().detach().numpy()
         cv2.imwrite(os.path.join(path_to_save + "/estimated_kernels", fname), estimated_k * 255)
-        print("Saved estimated image and kernel.")
-
-    print("Saved estimated image")
 
 
 def plot_graphs(fname, path_to_save, losses, image_grads, kernel_grads=None):
