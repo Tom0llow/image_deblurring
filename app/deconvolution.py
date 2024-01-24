@@ -12,6 +12,9 @@ def optimize(blur_image, blur_kernel, image_size, image_score_fn, lambda_, eta_,
     channel, h, w = image_size
     is_rgb = True if channel == 3 else False
 
+    # remove noise from Kernel
+    blur_kernel = torch.where(blur_kernel < 10, 0, blur_kernel)
+
     # Initial samples
     image_init = torch.randn(num_scales, *image_size, device=device)
 

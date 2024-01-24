@@ -44,7 +44,7 @@ class KernelLoss(DeblurLoss):
         image = normalize(image.to(self.device))
         estimated_k = normalize(E(self.x_k))
         if self.is_resize:
-            estimated_k = F.resize(estimated_k, size=self.kernel_size, interpolation=T.InterpolationMode.NEAREST)
+            estimated_k = F.resize(estimated_k, size=self.kernel_size, interpolation=T.InterpolationMode.BILINEAR)
         estimated_k.squeeze_()
 
         estimated_b = conv2D(image, estimated_k)

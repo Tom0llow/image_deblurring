@@ -1,9 +1,9 @@
-process_num: 1
-data_num: 1 # <= N-1
+process_num: 5
+data_num: 5 # <= N-1
 device: "cuda"
 
 num_scales: 10000
-lambda_: 0.0005 # regularization coefficient
+lambda_: 0.0001 # regularization coefficient
 eta_: 0.01 # learning rate
 
 num_steps: 100000

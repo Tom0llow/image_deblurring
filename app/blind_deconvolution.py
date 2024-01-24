@@ -39,7 +39,7 @@ def optimize(blur_image, image_size, kernel_size, image_score_fn, kernel_score_f
     estimated_i = E(model_i.state_dict()["x_i"]) if is_rgb else E(model_i.state_dict()["x_i"]).repeat(3, 1, 1)
     estimated_k = E(model_k.state_dict()["x_k"])
     if is_resize:
-        F.resize(E(model_k.state_dict()["x_k"]), size=kernel_size, interpolation=T.InterpolationMode.NEAREST)
+        F.resize(E(model_k.state_dict()["x_k"]), size=kernel_size, interpolation=T.InterpolationMode.BILINEAR)
     earlyStopping = EarlyStopping(fname, path_to_save, patience=patience, verbose=True)
     with tqdm(timesteps) as tqdm_epoch:
         for i, t in enumerate(tqdm_epoch):
@@ -71,7 +71,7 @@ def optimize(blur_image, image_size, kernel_size, image_score_fn, kernel_score_f
             loss_k.backward()
             estimated_k = optim_k.step(kernel_score)
             if is_resize:
-                estimated_k = F.resize(estimated_k, size=kernel_size, interpolation=T.InterpolationMode.NEAREST)
+                estimated_k = F.resize(estimated_k, size=kernel_size, interpolation=T.InterpolationMode.BILINEAR)
             del kernel_score
             torch.cuda.empty_cache()
 
