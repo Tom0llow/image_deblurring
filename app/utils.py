@@ -35,7 +35,7 @@ def create_results_dir(class_name, results_path="image/results"):
     except FileExistsError:
         print(f"- {class_dir} is already exist.")
 
-    for sub_dir_name in ["blur_images", "estimated_images", "estimated_kernels", "original_images", "original_kernels", "outputs"]:
+    for sub_dir_name in ["blur_images", "estimated_images", "estimated_kernels", "estimated_blur_images", "original_images", "original_kernels", "outputs"]:
         try:
             sub_dir = os.path.join(class_dir, sub_dir_name)
             os.mkdir(sub_dir)
@@ -57,7 +57,7 @@ def save_originals(fname, paths, path_to_save):
     print("Saved original image and kernel.")
 
 
-def save_estimateds(fname, path_to_save, estimated_i, estimated_k=None):
+def save_estimateds(fname, path_to_save, estimated_i, estimated_k=None, estimated_b=None):
     ## image
     estimated_i = estimated_i.permute(1, 2, 0)
     estimated_i = estimated_i.cpu().detach().numpy()
@@ -66,9 +66,14 @@ def save_estimateds(fname, path_to_save, estimated_i, estimated_k=None):
 
     ## kernel
     if estimated_k is not None:
-        estimated_k = estimated_k.permute(1, 2, 0).squeeze()
         estimated_k = estimated_k.cpu().detach().numpy()
         cv2.imwrite(os.path.join(path_to_save + "/estimated_kernels", fname), estimated_k * 255)
+
+    ## blur image
+    if estimated_b is not None:
+        estimated_b = estimated_b.permute(1, 2, 0)
+        estimated_b = estimated_b.cpu().detach().numpy()
+        cv2.imwrite(os.path.join(path_to_save + "/estimated_blur_images", fname), estimated_b * 255)
 
 
 def plot_graphs(fname, path_to_save, losses, image_grads, kernel_grads=None):

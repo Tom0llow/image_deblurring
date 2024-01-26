@@ -3,7 +3,7 @@ import torchvision.transforms.functional as F
 import torchvision.transforms as T
 from tqdm import tqdm
 
-from app.models.functions import E, normalize
+from app.models.functions import E, normalize, conv2D
 from app.models.utils import get_score, clip_grad_norm_, EarlyStopping
 from app.models.loss import ImageLoss, KernelLoss
 from app.models.LangevinGD import LangevinGD
@@ -11,7 +11,7 @@ from app.utils import save_estimateds, plot_graphs
 
 
 # Alternating Optimization
-def optimize(blur_image, image_size, kernel_size, image_score_fn, kernel_score_fn, lambda_, eta_, fname, path_to_save, save_interval=100, num_steps=1000, num_scales=10000, batch_size=64, patience=100, eps=1e-3, is_rgb=True, device="cuda"):
+def optimize(blur_image, image_size, kernel_size, image_score_fn, kernel_score_fn, lambda_, eta_, fname, path_to_save, save_interval=100, num_steps=1000, num_scales=10000, batch_size=64, patience=100, eps=1e-3, device="cuda"):
     channel, h, w = image_size
     is_rgb = True if channel == 3 else False
     is_resize = True if kernel_size != (64, 64) else False
@@ -40,6 +40,7 @@ def optimize(blur_image, image_size, kernel_size, image_score_fn, kernel_score_f
     estimated_k = E(model_k.state_dict()["x_k"])
     if is_resize:
         F.resize(E(model_k.state_dict()["x_k"]), size=kernel_size, interpolation=T.InterpolationMode.BILINEAR)
+    estimated_k.squeeze_()
     earlyStopping = EarlyStopping(fname, path_to_save, patience=patience, verbose=True)
     with tqdm(timesteps) as tqdm_epoch:
         for i, t in enumerate(tqdm_epoch):
@@ -72,6 +73,7 @@ def optimize(blur_image, image_size, kernel_size, image_score_fn, kernel_score_f
             estimated_k = optim_k.step(kernel_score)
             if is_resize:
                 estimated_k = F.resize(estimated_k, size=kernel_size, interpolation=T.InterpolationMode.BILINEAR)
+            estimated_k.squeeze_()
             del kernel_score
             torch.cuda.empty_cache()
 
@@ -89,7 +91,7 @@ def optimize(blur_image, image_size, kernel_size, image_score_fn, kernel_score_f
             if i % save_interval == 0:
                 plot_graphs(fname, path_to_save, losses=ave_losses, image_grads=image_grads, kernel_grads=kernel_grads)
             # save best estimateds
-            earlyStopping(ave_loss, estimated_i=normalize(estimated_i.detach().clone()), estimated_k=normalize(estimated_k.detach().clone()))
+            earlyStopping(ave_loss, estimated_i=normalize(estimated_i.detach().clone()), estimated_k=normalize(estimated_k.detach().clone()), estimated_b=normalize(conv2D(estimated_i.detach().clone(), estimated_k.detach().clone())))
             if earlyStopping.early_stop:
                 print("Early Stopping!")
                 break

@@ -26,12 +26,10 @@ def conv2D(image, kernel):
     delta = yN - key
 
     tmp = F.pad(kernel, (delta // 2, delta // 2, delta // 2, delta // 2), "constant")
-    tmp = normalize(tmp).nan_to_num()
     tmp = torch.eye(3)[..., None, None].to(tmp.device) * tmp[None, None, ...]
 
-    blured = normalize(image).unsqueeze(0)
+    blured = image.unsqueeze(0)
     blured = F.conv2d(blured, tmp, padding="same")
-    blured = normalize(blured)
     blured.squeeze_()
 
     return blured

@@ -59,12 +59,12 @@ class EarlyStopping:
         self.early_stop = False
         self.loss_min = float("inf")
 
-    def __call__(self, loss, estimated_i, estimated_k=None):
+    def __call__(self, loss, estimated_i, estimated_k=None, estimated_b=None):
         score = -loss
 
         if self.best_score is None:
             self.best_score = score
-            self.save(loss, estimated_i, estimated_k)
+            self.save(loss, estimated_i, estimated_k, estimated_b)
         elif score < self.best_score:
             self.counter += 1
             if self.verbose:
@@ -73,11 +73,11 @@ class EarlyStopping:
                 self.early_stop = True
         else:
             self.best_score = score
-            self.save(loss, estimated_i, estimated_k)
+            self.save(loss, estimated_i, estimated_k, estimated_b)
             self.counter = 0
 
-    def save(self, loss, estimated_i, estimated_k=None):
+    def save(self, loss, estimated_i, estimated_k=None, estimated_b=None):
         if self.verbose:
             print(f"Loss decreased ({self.loss_min:.6f} --> {loss:.6f}).  Saving estimateds ...")
-        save_estimateds(self.fname, self.path_to_save, estimated_i, estimated_k)
+        save_estimateds(self.fname, self.path_to_save, estimated_i, estimated_k, estimated_b)
         self.loss_min = loss

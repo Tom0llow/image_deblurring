@@ -1,7 +1,7 @@
 import torch
 from tqdm import tqdm
 
-from app.models.functions import E, normalize
+from app.models.functions import E, normalize, conv2D
 from app.models.utils import get_score, clip_grad_norm_, EarlyStopping
 from app.models.loss import ImageLoss
 from app.models.LangevinGD import LangevinGD
@@ -14,6 +14,7 @@ def optimize(blur_image, blur_kernel, image_size, image_score_fn, lambda_, eta_,
 
     # remove noise from Kernel
     blur_kernel = torch.where(blur_kernel < 10, 0, blur_kernel)
+    blur_kernel.squeeze_()
 
     # Initial samples
     image_init = torch.randn(num_scales, *image_size, device=device)
@@ -50,7 +51,6 @@ def optimize(blur_image, blur_kernel, image_size, image_score_fn, lambda_, eta_,
 
             del image_score
             torch.cuda.empty_cache()
-            # loss_i.detach_()
 
             ave_losses.append(ave_loss.detach().cpu().numpy())
             image_grad_norm = torch.norm(optim_i.param_groups[0]["params"][0].grad)
@@ -60,7 +60,7 @@ def optimize(blur_image, blur_kernel, image_size, image_score_fn, lambda_, eta_,
                 tqdm_epoch.set_description(f"Loss:{ave_loss:5f}, Image Grad Norm:{image_grad_norm:5f}")
                 plot_graphs(fname, path_to_save, losses=ave_losses, image_grads=image_grads)
             # save best estimateds
-            earlyStopping(ave_loss, estimated_i=normalize(estimated_i.detach().clone()))
+            earlyStopping(ave_loss, estimated_i=normalize(estimated_i.detach().clone()), estimated_b=normalize(conv2D(estimated_i, blur_kernel).detach().clone()))
             if earlyStopping.early_stop:
                 print("Early Stopping!")
                 break
