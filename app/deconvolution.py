@@ -12,10 +12,6 @@ def optimize(blur_image, blur_kernel, image_size, image_score_fn, lambda_, eta_,
     channel, h, w = image_size
     is_rgb = True if channel == 3 else False
 
-    # remove noise from Kernel
-    blur_kernel = torch.where(blur_kernel < 10, 0, blur_kernel)
-    blur_kernel.squeeze_()
-
     # Initial samples
     image_init = torch.randn(num_scales, *image_size, device=device)
 
@@ -37,7 +33,7 @@ def optimize(blur_image, blur_kernel, image_size, image_score_fn, lambda_, eta_,
             ave_loss = 0.0
 
             # optimize image
-            loss_i = model_i(blur_kernel)
+            loss_i = model_i(blur_kernel * 255)
 
             with torch.no_grad():
                 image_score = get_score(model_i.state_dict()["x_i"], t, image_score_fn, num_scales, batch_size)
@@ -45,6 +41,7 @@ def optimize(blur_image, blur_kernel, image_size, image_score_fn, lambda_, eta_,
             optim_i.zero_grad(set_to_none=True)
             loss_i.backward()
             estimated_i = optim_i.step(image_score)
+            estimated_i = torch.clip(estimated_i, 0, 1)
             if not is_rgb:
                 estimated_i = estimated_i.repeat(3, 1, 1)
             ave_loss += loss_i
@@ -60,7 +57,7 @@ def optimize(blur_image, blur_kernel, image_size, image_score_fn, lambda_, eta_,
                 tqdm_epoch.set_description(f"Loss:{ave_loss:5f}, Image Grad Norm:{image_grad_norm:5f}")
                 plot_graphs(fname, path_to_save, losses=ave_losses, image_grads=image_grads)
             # save best estimateds
-            earlyStopping(ave_loss, estimated_i=normalize(estimated_i.detach().clone()), estimated_b=normalize(conv2D(estimated_i, blur_kernel).detach().clone()))
+            earlyStopping(i, ave_loss, estimated_i=normalize(estimated_i.detach().clone()), estimated_b=normalize(conv2D(estimated_i.detach().clone(), blur_kernel.detach().clone())))
             if earlyStopping.early_stop:
                 print("Early Stopping!")
                 break

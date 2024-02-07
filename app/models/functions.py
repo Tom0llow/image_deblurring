@@ -28,8 +28,8 @@ def conv2D(image, kernel):
     tmp = F.pad(kernel, (delta // 2, delta // 2, delta // 2, delta // 2), "constant")
     tmp = torch.eye(3)[..., None, None].to(tmp.device) * tmp[None, None, ...]
 
-    blured = image.unsqueeze(0)
-    blured = F.conv2d(blured, tmp, padding="same")
-    blured.squeeze_()
+    blurred = image.unsqueeze(0)
+    blurred = F.conv2d(blurred, tmp, padding="same")
+    blurred.squeeze_()
 
-    return blured
+    return blurred

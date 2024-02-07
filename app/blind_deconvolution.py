@@ -47,7 +47,7 @@ def optimize(blur_image, image_size, kernel_size, image_score_fn, kernel_score_f
             ave_loss = 0.0
 
             # optimize image
-            loss_i = model_i(estimated_k.detach().clone())
+            loss_i = model_i(estimated_k.detach().clone() * 255)
 
             with torch.no_grad():
                 image_score = get_score(model_i.state_dict()["x_i"], t, image_score_fn, num_scales, batch_size)
@@ -91,7 +91,7 @@ def optimize(blur_image, image_size, kernel_size, image_score_fn, kernel_score_f
             if i % save_interval == 0:
                 plot_graphs(fname, path_to_save, losses=ave_losses, image_grads=image_grads, kernel_grads=kernel_grads)
             # save best estimateds
-            earlyStopping(ave_loss, estimated_i=normalize(estimated_i.detach().clone()), estimated_k=normalize(estimated_k.detach().clone()), estimated_b=normalize(conv2D(estimated_i.detach().clone(), estimated_k.detach().clone())))
+            earlyStopping(i, ave_loss, estimated_i=estimated_i.detach().clone(), estimated_k=estimated_k.detach().clone(), estimated_b=normalize(conv2D(estimated_i.detach().clone(), estimated_k.detach().clone())))
             if earlyStopping.early_stop:
                 print("Early Stopping!")
                 break

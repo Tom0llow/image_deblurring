@@ -1,5 +1,4 @@
 import os
-import shutil
 from contextlib import redirect_stdout
 import cv2
 import matplotlib.pyplot as plt
@@ -28,14 +27,14 @@ def run(processes):
         p.join()
 
 
-def create_results_dir(class_name, results_path="image/results"):
+def create_results_dir(class_name, results_path="results"):
     try:
         class_dir = os.path.join(results_path, class_name)
         os.mkdir(class_dir)
     except FileExistsError:
         print(f"- {class_dir} is already exist.")
 
-    for sub_dir_name in ["blur_images", "estimated_images", "estimated_kernels", "estimated_blur_images", "original_images", "original_kernels", "outputs"]:
+    for sub_dir_name in ["original_blur_images", "original_images", "original_kernels", "estimated_images", "estimated_kernels", "estimated_blur_images", "outputs"]:
         try:
             sub_dir = os.path.join(class_dir, sub_dir_name)
             os.mkdir(sub_dir)
@@ -45,35 +44,47 @@ def create_results_dir(class_name, results_path="image/results"):
     return class_dir
 
 
-def save_originals(fname, paths, path_to_save):
-    sub_dir_names = ["blur_images", "original_images", "original_kernels"]
-    for i in range(len(sub_dir_names)):
-        sub_dir = os.path.join(path_to_save, sub_dir_names[i])
+def save(fname, class_name, path_to_save, image, kernel_image=None, blur_image=None):
+    # image
+    i = image.permute(1, 2, 0)
+    i = i.cpu().detach().numpy()
+    i = cv2.cvtColor(i, cv2.COLOR_RGB2BGR)
+    cv2.imwrite(os.path.join(path_to_save + f"/{class_name}_images", fname), i * 255)
 
-        src = paths[i]
-        dst = os.path.join(sub_dir, fname)
-        shutil.copyfile(src, dst)
+    # kernel
+    if kernel_image is not None:
+        k = kernel_image.cpu().detach().numpy()
+        cv2.imwrite(os.path.join(path_to_save + f"/{class_name}_kernels", fname), k * 255)
 
+    # blur image
+    if blur_image is not None:
+        b = blur_image.permute(1, 2, 0)
+        b = b.cpu().detach().numpy()
+        b = cv2.cvtColor(b, cv2.COLOR_RGB2BGR)
+        cv2.imwrite(os.path.join(path_to_save + f"/{class_name}_blur_images", fname), b * 255)
+
+
+def save_originals(fname, path_to_save, sharp_image, kernel_image, blur_image):
+    save(
+        fname,
+        class_name="original",
+        path_to_save=path_to_save,
+        image=sharp_image,
+        kernel_image=kernel_image,
+        blur_image=blur_image,
+    )
     print("Saved original image and kernel.")
 
 
 def save_estimateds(fname, path_to_save, estimated_i, estimated_k=None, estimated_b=None):
-    ## image
-    estimated_i = estimated_i.permute(1, 2, 0)
-    estimated_i = estimated_i.cpu().detach().numpy()
-    estimated_i = cv2.cvtColor(estimated_i, cv2.COLOR_RGB2BGR)
-    cv2.imwrite(os.path.join(path_to_save + "/estimated_images", fname), estimated_i * 255)
-
-    ## kernel
-    if estimated_k is not None:
-        estimated_k = estimated_k.cpu().detach().numpy()
-        cv2.imwrite(os.path.join(path_to_save + "/estimated_kernels", fname), estimated_k * 255)
-
-    ## blur image
-    if estimated_b is not None:
-        estimated_b = estimated_b.permute(1, 2, 0)
-        estimated_b = estimated_b.cpu().detach().numpy()
-        cv2.imwrite(os.path.join(path_to_save + "/estimated_blur_images", fname), estimated_b * 255)
+    save(
+        fname,
+        class_name="estimated",
+        path_to_save=path_to_save,
+        image=estimated_i,
+        kernel_image=estimated_k,
+        blur_image=estimated_b,
+    )
 
 
 def plot_graphs(fname, path_to_save, losses, image_grads, kernel_grads=None):

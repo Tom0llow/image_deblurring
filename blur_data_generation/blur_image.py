@@ -4,8 +4,7 @@ import torch
 import torchvision.transforms as transforms
 from torchvision.io import read_image
 
-from generate_PSF import PSF
-from PSF import scale
+from generate_PSF import PSF, scale
 
 
 class BlurImage(object):

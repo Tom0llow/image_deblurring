@@ -4,7 +4,7 @@ from math import ceil
 
 
 class Trajectory(object):
-    def __init__(self, canvas=64, iters=2000, max_len=60, expl=None, path_to_save=None):
+    def __init__(self, canvas=64, iters=2000, max_len=60, expl=None):
         """
         Generates a variety of random motion trajectories in continuous domain as in [Boracchi and Foi 2012]. Each
         trajectory consists of a complex-valued vector determining the discrete positions of a particle following a
@@ -29,15 +29,11 @@ class Trajectory(object):
             self.expl = 0.1 * np.random.uniform(0, 1)
         else:
             self.expl = expl
-        if path_to_save is None:
-            pass
-        else:
-            self.path_to_save = path_to_save
         self.tot_length = None
         self.big_expl_count = None
         self.x = None
 
-    def fit(self, show=False, save=False):
+    def fit(self):
         """
         Generate motion, you can save or plot, coordinates of motion you can find in x property.
         Also you can fin properties tot_length, big_expl_count.
@@ -90,30 +86,4 @@ class Trajectory(object):
         self.big_expl_count = big_expl_count
         self.x = x
 
-        if show or save:
-            self.__plot_canvas(show, save)
         return self
-
-    def __plot_canvas(self, show, save):
-        if self.x is None:
-            raise Exception("Please run fit() method first")
-        else:
-            plt.close()
-            plt.plot(self.x.real, self.x.imag, "-", color="blue")
-
-            plt.xlim((0, self.canvas))
-            plt.ylim((0, self.canvas))
-            if show and save:
-                plt.savefig(self.path_to_save)
-                plt.show()
-            elif save:
-                if self.path_to_save is None:
-                    raise Exception("Please create Trajectory instance with path_to_save")
-                plt.savefig(self.path_to_save)
-            elif show:
-                plt.show()
-
-
-if __name__ == "__main__":
-    trajectory = Trajectory(expl=0.005, path_to_save="./data/RandomMotionBlur/main.png")
-    trajectory.fit(show=False, save=True)

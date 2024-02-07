@@ -1,5 +1,5 @@
-process_num: 5
-data_num: 5 # <= N-1
+process_num: 1
+data_num: 20 # <= N-1
 device: "cuda"
 
 num_scales: 10000
@@ -9,4 +9,6 @@ eta_: 0.001 # learning rate
 num_steps: 100000
 save_interval: 100
 score_batch_size: 256 # <= num_scales
-patience: 10000 # early stopping rate
+patience: 5000 # early stopping rate
+
+noise_std: 0.10 # noise parcent

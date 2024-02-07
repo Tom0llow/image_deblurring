@@ -71,9 +71,10 @@ dataset/celebahq_256/
 dataset/mnist/
 dataset/RandomMotionBlur/
 image/
+results/
 outputs/
 score_based_model/__pycache__/
-score_based_model/checkpoints/celebahq_256/
+score_based_model/checkpoints/
 score_based_model/score_sde_pytorch/__pycache__/
 score_based_model/score_sde_pytorch/exp/
 test.py

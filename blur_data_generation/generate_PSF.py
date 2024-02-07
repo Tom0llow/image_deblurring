@@ -3,11 +3,12 @@ from math import ceil
 import matplotlib.pyplot as plt
 import cv2
 import os
+
 from generate_trajectory import Trajectory
 
 
 class PSF(object):
-    def __init__(self, canvas=None, trajectory=None, fraction=None, path_to_save=None):
+    def __init__(self, canvas=None, trajectory=None, fraction=None):
         if canvas is None:
             self.canvas = (canvas, canvas)
         else:
@@ -20,12 +21,11 @@ class PSF(object):
             self.fraction = [1 / 100, 1 / 10, 1 / 2, 1]
         else:
             self.fraction = fraction
-        self.path_to_save = path_to_save
         self.PSFnumber = len(self.fraction)
         self.iters = len(self.trajectory)
         self.PSFs = []
 
-    def fit(self, show=False, save=False):
+    def fit(self):
         PSF = np.zeros(self.canvas)
 
         triangle_fun = lambda x: np.maximum(0, (1 - np.abs(x)))
@@ -60,32 +60,25 @@ class PSF(object):
                 PSF[M1, M2] += t_proportion * triangle_fun_prod(self.trajectory[t].real - M2, self.trajectory[t].imag - M1)
 
             self.PSFs.append(PSF / (self.iters))
-        if show or save:
-            self.__plot_canvas(show, save)
 
         return self.PSFs
 
-    def __plot_canvas(self, show, save):
-        if len(self.PSFs) == 0:
-            raise Exception("Please run fit() method first.")
-        else:
-            plt.close()
-            fig, axes = plt.subplots(1, self.PSFnumber, figsize=(10, 10))
-            for i in range(self.PSFnumber):
-                axes[i].imshow(self.PSFs[i], cmap="gray")
-            if show and save:
-                if self.path_to_save is None:
-                    raise Exception("Please create Trajectory instance with path_to_save")
-                plt.savefig(self.path_to_save)
-                plt.show()
-            elif save:
-                if self.path_to_save is None:
-                    raise Exception("Please create Trajectory instance with path_to_save")
-                plt.savefig(self.path_to_save)
-            elif show:
-                plt.show()
+
+def scale(x, a, b):
+    if x.min() == x.max():
+        return np.zeros_like(x)
+    scaled = (b - a) * (x - x.min()) / (x.max() - x.min()) + a
+    return scaled
 
 
 if __name__ == "__main__":
-    psf = PSF(canvas=128, path_to_save="./data/RandomMotionBlur/psf.png")
-    psf.fit(show=True, save=True)
+    params = [0.01, 0.009, 0.008, 0.007, 0.005, 0.003]
+
+    N = 80000  # data_num
+    for i in range(N):
+        trajectory = Trajectory(canvas=64, max_len=60, expl=np.random.choice(params)).fit()
+        psf = PSF(canvas=64, trajectory=trajectory).fit()
+
+        part = np.random.choice([1, 2, 3])
+        cv2.imwrite(f"./data/RandomMotionBlur/psf_{f'{i:05}'}.png", scale(psf[part], 0, 255))
+    print("Complete generated PSF !")
