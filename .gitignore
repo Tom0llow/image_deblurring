@@ -67,7 +67,9 @@ data/raw/
 data/results_sharp/
 dataset/blured_celebahq_256/
 dataset/blured_mnist/
+dataset/blured_cifar10/
 dataset/celebahq_256/
+dataset/cifar10/
 dataset/mnist/
 dataset/RandomMotionBlur/
 image/
@@ -75,6 +77,7 @@ results/
 outputs/
 score_based_model/__pycache__/
 score_based_model/checkpoints/
+score_based_model/score_sde_pytorch/
 score_based_model/score_sde_pytorch/__pycache__/
 score_based_model/score_sde_pytorch/exp/
 test.py
