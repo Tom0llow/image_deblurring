@@ -75,9 +75,9 @@ dataset/RandomMotionBlur/
 image/
 results/
 outputs/
+eval/
 score_based_model/__pycache__/
 score_based_model/checkpoints/
-score_based_model/score_sde_pytorch/
 score_based_model/score_sde_pytorch/__pycache__/
 score_based_model/score_sde_pytorch/exp/
 test.py
