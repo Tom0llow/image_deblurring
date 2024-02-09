@@ -73,7 +73,7 @@ dataset/cifar10/
 dataset/mnist/
 dataset/RandomMotionBlur/
 image/
-results/
+deconv_results/
 outputs/
 eval/
 score_based_model/__pycache__/
