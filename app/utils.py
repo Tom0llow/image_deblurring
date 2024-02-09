@@ -3,12 +3,10 @@ from contextlib import redirect_stdout
 import cv2
 import matplotlib.pyplot as plt
 import numpy as np
-from tqdm import tqdm
 from functools import partialmethod
 
 
 def run(processes):
-    tqdm.__init__ = partialmethod(tqdm.__init__, disable=True)
     if processes is None:
         return
 
@@ -27,7 +25,7 @@ def run(processes):
         p.join()
 
 
-def create_results_dir(class_name, results_path="results"):
+def create_results_dir(class_name, results_path):
     try:
         class_dir = os.path.join(results_path, class_name)
         os.mkdir(class_dir)

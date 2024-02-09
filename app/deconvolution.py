@@ -1,5 +1,4 @@
 import torch
-from tqdm import tqdm
 
 from app.models.functions import E, normalize, conv2D
 from app.models.utils import get_score, clip_grad_norm_, EarlyStopping
@@ -28,36 +27,35 @@ def optimize(blur_image, blur_kernel, image_size, image_score_fn, lambda_, eta_,
     ave_losses = []
     image_grads = []
     earlyStopping = EarlyStopping(fname, path_to_save, patience=patience, verbose=True)
-    with tqdm(timesteps) as tqdm_epoch:
-        for i, t in enumerate(tqdm_epoch):
-            ave_loss = 0.0
 
-            # optimize image
-            loss_i = model_i(blur_kernel * 255)
+    for i, t in enumerate(timesteps):
+        ave_loss = 0.0
 
-            with torch.no_grad():
-                image_score = get_score(model_i.state_dict()["x_i"], t, image_score_fn, num_scales, batch_size)
-            ## langevin step
-            optim_i.zero_grad(set_to_none=True)
-            loss_i.backward()
-            estimated_i = optim_i.step(image_score)
-            estimated_i = torch.clip(estimated_i, 0, 1)
-            if not is_rgb:
-                estimated_i = estimated_i.repeat(3, 1, 1)
-            ave_loss += loss_i
+        # optimize image
+        loss_i = model_i(blur_kernel * 255)
 
-            del image_score
-            torch.cuda.empty_cache()
+        with torch.no_grad():
+            image_score = get_score(model_i.state_dict()["x_i"], t, image_score_fn, num_scales, batch_size)
+        ## langevin step
+        optim_i.zero_grad(set_to_none=True)
+        loss_i.backward()
+        estimated_i = optim_i.step(image_score)
+        estimated_i = torch.clip(estimated_i, 0, 1)
+        if not is_rgb:
+            estimated_i = estimated_i.repeat(3, 1, 1)
+        ave_loss += loss_i
 
-            ave_losses.append(ave_loss.detach().cpu().numpy())
-            image_grad_norm = torch.norm(optim_i.param_groups[0]["params"][0].grad)
-            image_grads.append(image_grad_norm.detach().cpu().numpy())
+        del image_score
+        torch.cuda.empty_cache()
 
-            if i % save_interval == 0:
-                tqdm_epoch.set_description(f"Loss:{ave_loss:5f}, Image Grad Norm:{image_grad_norm:5f}")
-                plot_graphs(fname, path_to_save, losses=ave_losses, image_grads=image_grads)
-            # save best estimateds
-            earlyStopping(i, ave_loss, estimated_i=normalize(estimated_i.detach().clone()), estimated_b=normalize(conv2D(estimated_i.detach().clone(), blur_kernel.detach().clone())))
-            if earlyStopping.early_stop:
-                print("Early Stopping!")
-                break
+        ave_losses.append(ave_loss.detach().cpu().numpy())
+        image_grad_norm = torch.norm(optim_i.param_groups[0]["params"][0].grad)
+        image_grads.append(image_grad_norm.detach().cpu().numpy())
+
+        if i % save_interval == 0:
+            plot_graphs(fname, path_to_save, losses=ave_losses, image_grads=image_grads)
+        # save best estimateds
+        earlyStopping(i, ave_loss, estimated_i=normalize(estimated_i.detach().clone()), estimated_b=normalize(conv2D(estimated_i.detach().clone(), blur_kernel.detach().clone())))
+        if earlyStopping.early_stop:
+            print("Early Stopping!")
+            break

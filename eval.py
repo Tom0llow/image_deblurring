@@ -50,7 +50,7 @@ def plot_graphs(fname, path_to_save, psnrs, ssims):
     plt.clf()
 
 
-def eval(class_name):
+def eval(class_name, deb_type="deconv"):
     path_to_save = f"./eval/{class_name}"
     # make dir
     try:
@@ -61,8 +61,8 @@ def eval(class_name):
     psnrs = []
     ssims = []
     for i in range(0, 10 + 1):
-        o_folder = f"./results/{class_name} ({i}_perc_noise)/original_images"
-        e_folder = f"./results/{class_name} ({i}_perc_noise)/estimated_images"
+        o_folder = f"./{deb_type}_results/{class_name}/{deb_type}_{class_name} ({i}_perc_noise)/original_images"
+        e_folder = f"./{deb_type}_results/{class_name}/{deb_type}_{class_name} ({i}_perc_noise)/estimated_images"
 
         psnr, ssim = calc(o_folder, e_folder)
         psnrs.append(psnr)
@@ -72,4 +72,4 @@ def eval(class_name):
 
 
 if __name__ == "__main__":
-    eval(class_name="deconv_mnist")
+    eval(class_name="mnist", deb_type="deconv")

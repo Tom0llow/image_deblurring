@@ -1,5 +1,5 @@
 process_num: 1
-data_num: 20 # <= N-1
+data_num: 10 # <= N-1
 device: "cuda"
 
 num_scales: 10000
@@ -11,4 +11,4 @@ save_interval: 100
 score_batch_size: 256 # <= num_scales
 patience: 5000 # early stopping rate
 
-noise_std: 0.10 # noise parcent
+noise_std: 0.04 # noise parcent

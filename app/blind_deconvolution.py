@@ -1,7 +1,6 @@
 import torch
 import torchvision.transforms.functional as F
 import torchvision.transforms as T
-from tqdm import tqdm
 
 from app.models.functions import E, normalize, conv2D
 from app.models.utils import get_score, clip_grad_norm_, EarlyStopping
@@ -42,56 +41,54 @@ def optimize(blur_image, image_size, kernel_size, image_score_fn, kernel_score_f
         F.resize(E(model_k.state_dict()["x_k"]), size=kernel_size, interpolation=T.InterpolationMode.BILINEAR)
     estimated_k.squeeze_()
     earlyStopping = EarlyStopping(fname, path_to_save, patience=patience, verbose=True)
-    with tqdm(timesteps) as tqdm_epoch:
-        for i, t in enumerate(tqdm_epoch):
-            ave_loss = 0.0
+    for i, t in enumerate(timesteps):
+        ave_loss = 0.0
 
-            # optimize image
-            loss_i = model_i(estimated_k.detach().clone() * 255)
+        # optimize image
+        loss_i = model_i(estimated_k.detach().clone() * 255)
 
-            with torch.no_grad():
-                image_score = get_score(model_i.state_dict()["x_i"], t, image_score_fn, num_scales, batch_size)
-            ## langevin step
-            optim_i.zero_grad(set_to_none=True)
-            loss_i.backward()
-            estimated_i = optim_i.step(image_score)
-            if not is_rgb:
-                estimated_i = estimated_i.repeat(3, 1, 1)
-            del image_score
-            torch.cuda.empty_cache()
+        with torch.no_grad():
+            image_score = get_score(model_i.state_dict()["x_i"], t, image_score_fn, num_scales, batch_size)
+        ## langevin step
+        optim_i.zero_grad(set_to_none=True)
+        loss_i.backward()
+        estimated_i = optim_i.step(image_score)
+        if not is_rgb:
+            estimated_i = estimated_i.repeat(3, 1, 1)
+        del image_score
+        torch.cuda.empty_cache()
 
-            ave_loss += loss_i
-            loss_i.detach_()
+        ave_loss += loss_i
+        loss_i.detach_()
 
-            # optimize kernel
-            loss_k = model_k(estimated_i.detach().clone())
-            with torch.no_grad():
-                kernel_score = get_score(model_k.state_dict()["x_k"], t, kernel_score_fn, num_scales, batch_size)
-            ## langevin step
-            optim_k.zero_grad(set_to_none=True)
-            loss_k.backward()
-            estimated_k = optim_k.step(kernel_score)
-            if is_resize:
-                estimated_k = F.resize(estimated_k, size=kernel_size, interpolation=T.InterpolationMode.BILINEAR)
-            estimated_k.squeeze_()
-            del kernel_score
-            torch.cuda.empty_cache()
+        # optimize kernel
+        loss_k = model_k(estimated_i.detach().clone())
+        with torch.no_grad():
+            kernel_score = get_score(model_k.state_dict()["x_k"], t, kernel_score_fn, num_scales, batch_size)
+        ## langevin step
+        optim_k.zero_grad(set_to_none=True)
+        loss_k.backward()
+        estimated_k = optim_k.step(kernel_score)
+        if is_resize:
+            estimated_k = F.resize(estimated_k, size=kernel_size, interpolation=T.InterpolationMode.BILINEAR)
+        estimated_k.squeeze_()
+        del kernel_score
+        torch.cuda.empty_cache()
 
-            ave_loss += loss_k
-            loss_k.detach_()
+        ave_loss += loss_k
+        loss_k.detach_()
 
-            ave_loss /= 2
-            ave_losses.append(ave_loss.detach().cpu().numpy())
-            image_grad_norm = torch.norm(optim_i.param_groups[0]["params"][0].grad)
-            image_grads.append(image_grad_norm.detach().cpu().numpy())
-            kernel_grad_norm = torch.norm(optim_k.param_groups[0]["params"][0].grad)
-            kernel_grads.append(kernel_grad_norm.detach().cpu().numpy())
+        ave_loss /= 2
+        ave_losses.append(ave_loss.detach().cpu().numpy())
+        image_grad_norm = torch.norm(optim_i.param_groups[0]["params"][0].grad)
+        image_grads.append(image_grad_norm.detach().cpu().numpy())
+        kernel_grad_norm = torch.norm(optim_k.param_groups[0]["params"][0].grad)
+        kernel_grads.append(kernel_grad_norm.detach().cpu().numpy())
 
-            tqdm_epoch.set_description(f"Loss:{ave_loss:5f}, Image Grad Norm:{image_grad_norm:5f}, Kernel Grad Norm:{kernel_grad_norm:5f}")
-            if i % save_interval == 0:
-                plot_graphs(fname, path_to_save, losses=ave_losses, image_grads=image_grads, kernel_grads=kernel_grads)
-            # save best estimateds
-            earlyStopping(i, ave_loss, estimated_i=estimated_i.detach().clone(), estimated_k=estimated_k.detach().clone(), estimated_b=normalize(conv2D(estimated_i.detach().clone(), estimated_k.detach().clone())))
-            if earlyStopping.early_stop:
-                print("Early Stopping!")
-                break
+        if i % save_interval == 0:
+            plot_graphs(fname, path_to_save, losses=ave_losses, image_grads=image_grads, kernel_grads=kernel_grads)
+        # save best estimateds
+        earlyStopping(i, ave_loss, estimated_i=estimated_i.detach().clone(), estimated_k=estimated_k.detach().clone(), estimated_b=normalize(conv2D(estimated_i.detach().clone(), estimated_k.detach().clone())))
+        if earlyStopping.early_stop:
+            print("Early Stopping!")
+            break
