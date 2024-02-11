@@ -23,7 +23,6 @@ def sampling(sde, score_model, batch_size=64, snr=0.16, eps=1e-3, device="cuda")
             langevin_step_size = 2 * (snr * noise_norm / grad_norm) ** 2
             x_mean = x + langevin_step_size * grad
             x = x_mean + torch.sqrt(2 * langevin_step_size) * noise
-
             # # Predictor step (Euler-Maruyama)
             # dt = -1.0 / sde.N
             # z = torch.randn_like(x)
@@ -37,7 +36,7 @@ def sampling(sde, score_model, batch_size=64, snr=0.16, eps=1e-3, device="cuda")
 def run(image_ckpt_path, path_to_save, filename, device="cuda"):
     sde, image_score_model = get_cifar10_score_model(image_ckpt_path, device=device)
 
-    batch_size = 64
+    batch_size = 1
 
     samples = sampling(
         sde=sde,

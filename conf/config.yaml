@@ -1,14 +1,15 @@
 process_num: 1
-data_num: 10 # <= N-1
+id: 1 # data index
+epoch_num: 1
 device: "cuda"
 
 num_scales: 10000
-lambda_: 0.0001 # regularization coefficient
+lambda_: 0.0005 # regularization coefficient
 eta_: 0.001 # learning rate
 
 num_steps: 100000
 save_interval: 100
-score_batch_size: 256 # <= num_scales
-patience: 5000 # early stopping rate
+score_batch_size: 1024 # <= num_scales
+patience: 2500 # early stopping rate
 
-noise_std: 0.04 # noise parcent
+noise_std: 0.00 # noise parcent

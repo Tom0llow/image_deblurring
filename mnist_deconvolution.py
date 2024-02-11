@@ -99,11 +99,10 @@ if __name__ == "__main__":
     blur_kernel_paths = os.listdir(blur_kernels_folder)
     sharp_image_paths = os.listdir(sharp_images_folder)
 
-    processes = []
-    processe_num = params["process_num"]
-    N = params["data_num"]
-    assert N <= len(blur_image_paths) - 1, "data_num should be set to less than the total number of data."
-    for b_path, k_path, i_path in zip(blur_image_paths[:N], sharp_image_paths[:N], blur_kernel_paths[:N]):
+    id = params["id"]
+    N = params["epoch_num"]
+    assert id + N <= len(blur_image_paths) - 1, "The sum of id and epoch_num should be set to less than the total number of data."
+    for b_path, k_path, i_path in zip(blur_image_paths[id : id + N], sharp_image_paths[id : id + N], blur_kernel_paths[id : id + N]):
         blur_image_path = os.path.join(blur_images_folder, b_path)
         sharp_image_path = os.path.join(sharp_images_folder, i_path)
         blur_kernel_path = os.path.join(blur_kernels_folder, k_path)

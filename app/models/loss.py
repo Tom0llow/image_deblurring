@@ -24,6 +24,8 @@ class ImageLoss(DeblurLoss):
     def forward(self, kernel):
         real_b = self.blur_image
         estimated_i = E(self.x_i) if self.is_rgb else E(self.x_i).repeat(3, 1, 1)
+        estimated_i = torch.clip(estimated_i, 0, 1)
+        estimated_i = normalize(estimated_i)
         kernel = kernel.to(self.device)
 
         estimated_b = normalize(conv2D(estimated_i, kernel))
@@ -45,6 +47,8 @@ class KernelLoss(DeblurLoss):
         estimated_k = E(self.x_k)
         if self.is_resize:
             estimated_k = F.resize(estimated_k, size=self.kernel_size, interpolation=T.InterpolationMode.BILINEAR)
+        estimated_k = torch.clip(estimated_k, 0, 1)
+        estimated_k = normalize(estimated_k)
         estimated_k.squeeze_()
 
         estimated_b = normalize(conv2D(image, estimated_k))

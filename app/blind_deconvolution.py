@@ -53,6 +53,8 @@ def optimize(blur_image, image_size, kernel_size, image_score_fn, kernel_score_f
         optim_i.zero_grad(set_to_none=True)
         loss_i.backward()
         estimated_i = optim_i.step(image_score)
+        estimated_i = torch.clip(estimated_i, 0, 1)
+        estimated_i = normalize(estimated_i)
         if not is_rgb:
             estimated_i = estimated_i.repeat(3, 1, 1)
         del image_score
@@ -71,6 +73,8 @@ def optimize(blur_image, image_size, kernel_size, image_score_fn, kernel_score_f
         estimated_k = optim_k.step(kernel_score)
         if is_resize:
             estimated_k = F.resize(estimated_k, size=kernel_size, interpolation=T.InterpolationMode.BILINEAR)
+        estimated_k = torch.clip(estimated_k, 0, 1)
+        estimated_k = normalize(estimated_k)
         estimated_k.squeeze_()
         del kernel_score
         torch.cuda.empty_cache()
@@ -88,7 +92,8 @@ def optimize(blur_image, image_size, kernel_size, image_score_fn, kernel_score_f
         if i % save_interval == 0:
             plot_graphs(fname, path_to_save, losses=ave_losses, image_grads=image_grads, kernel_grads=kernel_grads)
         # save best estimateds
-        earlyStopping(i, ave_loss, estimated_i=estimated_i.detach().clone(), estimated_k=estimated_k.detach().clone(), estimated_b=normalize(conv2D(estimated_i.detach().clone(), estimated_k.detach().clone())))
+        estimated_b = normalize(conv2D(estimated_i, estimated_k))
+        earlyStopping(i, ave_loss, estimated_i=estimated_i.detach().clone(), estimated_k=estimated_k.detach().clone(), estimated_b=estimated_b.detach().clone())
         if earlyStopping.early_stop:
             print("Early Stopping!")
             break
