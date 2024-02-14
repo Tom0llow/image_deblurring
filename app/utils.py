@@ -91,17 +91,17 @@ def plot_graphs(fname, path_to_save, losses, image_grads, kernel_grads=None):
         plt.figure(figsize=(30, 8))
         # plot losses
         plt.subplot(131, title="loss")
-        plt.plot(np.arange(len(losses)), losses, marker="o", color="b")
+        plt.plot(np.arange(len(losses)), losses, color="b")
         plt.xlabel("time step")
         plt.grid()
         # plot image grads
         plt.subplot(132, title="image gradient")
-        plt.plot(np.arange(len(image_grads)), image_grads, marker="o", color="m")
+        plt.plot(np.arange(len(image_grads)), image_grads, color="m")
         plt.xlabel("time step")
         plt.grid()
         # plot kernel grads
         plt.subplot(133, title="kernel gradient")
-        plt.plot(np.arange(len(kernel_grads)), kernel_grads, marker="o", color="r")
+        plt.plot(np.arange(len(kernel_grads)), kernel_grads, color="r")
         plt.xlabel("time step")
         plt.grid()
     else:
@@ -109,12 +109,12 @@ def plot_graphs(fname, path_to_save, losses, image_grads, kernel_grads=None):
         plt.figure(figsize=(20, 8))
         # plot losses
         plt.subplot(121, title="loss")
-        plt.plot(np.arange(len(losses)), losses, marker="o", color="b")
+        plt.plot(np.arange(len(losses)), losses, color="b")
         plt.xlabel("time step")
         plt.grid()
         # plot image grads
         plt.subplot(122, title="image gradient")
-        plt.plot(np.arange(len(image_grads)), image_grads, marker="o", color="m")
+        plt.plot(np.arange(len(image_grads)), image_grads, color="m")
         plt.xlabel("time step")
         plt.grid()
 

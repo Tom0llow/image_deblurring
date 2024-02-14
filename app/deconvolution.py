@@ -32,7 +32,7 @@ def optimize(blur_image, blur_kernel, image_size, image_score_fn, lambda_, eta_,
         ave_loss = 0.0
 
         # optimize image
-        loss_i = model_i(blur_kernel * 255)
+        loss_i = model_i(blur_kernel)
 
         with torch.no_grad():
             image_score = get_score(model_i.state_dict()["x_i"], t, image_score_fn, num_scales, batch_size)

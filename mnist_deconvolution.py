@@ -4,6 +4,7 @@ import warnings
 import functools
 import torch
 from torchvision.io import read_image
+from natsort import natsorted
 
 from app.models.functions import normalize
 from app.utils import create_results_dir, save_originals, run
@@ -95,14 +96,14 @@ if __name__ == "__main__":
     blur_images_folder = "dataset/blured_mnist/blur_images"
     blur_kernels_folder = "dataset/blured_mnist/blur_kernels"
     sharp_images_folder = "dataset/blured_mnist/sharp_images"
-    blur_image_paths = os.listdir(blur_images_folder)
-    blur_kernel_paths = os.listdir(blur_kernels_folder)
-    sharp_image_paths = os.listdir(sharp_images_folder)
+    blur_image_paths = natsorted(os.listdir(blur_images_folder))
+    blur_kernel_paths = natsorted(os.listdir(blur_kernels_folder))
+    sharp_image_paths = natsorted(os.listdir(sharp_images_folder))
 
     id = params["id"]
     N = params["epoch_num"]
-    assert id + N <= len(blur_image_paths) - 1, "The sum of id and epoch_num should be set to less than the total number of data."
-    for b_path, k_path, i_path in zip(blur_image_paths[id : id + N], sharp_image_paths[id : id + N], blur_kernel_paths[id : id + N]):
+    assert id + N <= len(blur_image_paths), "The sum of id and epoch_num should be set to less than the total number of data."
+    for b_path, k_path, i_path in zip(blur_image_paths[id:], sharp_image_paths[id:], blur_kernel_paths[id:]):
         blur_image_path = os.path.join(blur_images_folder, b_path)
         sharp_image_path = os.path.join(sharp_images_folder, i_path)
         blur_kernel_path = os.path.join(blur_kernels_folder, k_path)
@@ -116,6 +117,9 @@ if __name__ == "__main__":
             noise_std,
             device,
         )
+        N -= 1
+        if N == 0:
+            break
     #     # make process.
     #     process = Process(
     #         target=mnist_deconvolution,
